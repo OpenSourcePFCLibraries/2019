@@ -16612,6 +16612,7 @@ public function string of_string (object ae_object);////////////////////////////
 //
 //	Version
 //	12.5   Initial version
+//	2019 R2	Additional datatypes
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -16678,9 +16679,15 @@ Choose Case ae_object
 	
 	Case classdefinitionobject!
 		Return "classdefinitionobject"  
+		
+	Case coderobject!
+		Return "coderobject"  
 	
 	Case commandbutton!
 		Return "commandbutton"  
+				
+	Case compressorobject!
+		Return "compressorobject"  
 	
 	Case connection!
 		Return "connection"  
@@ -16708,6 +16715,9 @@ Choose Case ae_object
 	
 	Case cplusplus!
 		Return "cplusplus"  
+				
+	Case crypterobject!
+		Return "crypterobject"  
 	
 	Case datastore!
 		Return "datastore"  
@@ -16774,6 +16784,9 @@ Choose Case ae_object
 	
 	Case extobject!
 		Return "extobject"  
+								
+	Case extractorobject!
+		Return "extractorobject"  
 	
 	Case functionobject!
 		Return "functionobject"  
@@ -16801,6 +16814,9 @@ Choose Case ae_object
 	
 	Case htrackbar!
 		Return "htrackbar"  
+				
+	Case httpclient!
+		Return "httpclient"  
 	
 	Case inet!
 		Return "inet"  
@@ -16819,6 +16835,18 @@ Choose Case ae_object
 	
 	Case jaguarorb!
 		Return "jaguarorb"  
+								
+	Case jsongenerator!
+		Return "jsongenerator"  
+								
+	Case jsonpackage!
+		Return "jsonpackage"  
+								
+	Case jsonparser!
+		Return "jsonparser"  
+								
+	Case jwtgenerator!
+		Return "jwtgenerator"  
 	
 	Case line!
 		Return "line"  
@@ -16876,6 +16904,12 @@ Choose Case ae_object
 	
 	Case notype!
 		Return "notype"  
+								
+	Case oauthclient!
+		Return "oauthclient"  
+								
+	Case oauthrequest!
+		Return "oauthrequest"  
 	
 	Case objhandle!
 		Return "objhandle"  
@@ -16969,6 +17003,12 @@ Choose Case ae_object
 	
 	Case remoteobject!
 		Return "remoteobject"  
+								
+	Case resourceresponse!
+		Return "resourceresponse"  
+								
+	Case restclient!
+		Return "restclient"  
 	
 	Case resultset!
 		Return "resultset"  
@@ -16978,6 +17018,45 @@ Choose Case ae_object
 	
 	Case richtextedit!
 		Return "richtextedit"  
+																
+	Case ribbonapplicationbuttonitem!
+		Return "ribbonapplicationbuttonitem"  
+								
+	Case ribbonapplicationmenu!
+		Return "ribbonapplicationmenu"  
+								
+	Case ribbonbar!
+		Return "ribbonbar"  
+								
+	Case ribboncategoryitem!
+		Return "ribboncategoryitem"  
+								
+	Case ribboncheckboxitem!
+		Return "ribboncheckboxitem"  
+								
+	Case ribboncomboboxitem!
+		Return "ribboncomboboxitem"  
+								
+	Case ribbongroupitem!
+		Return "ribbongroupitem"  
+								
+	Case ribbonlargebuttonitem!
+		Return "ribbonlargebuttonitem"  
+								
+	Case ribbonmenu!
+		Return "ribbonmenu"  
+								
+	Case ribbonmenuitem!
+		Return "ribbonmenuitem"  
+								
+	Case ribbonpanelitem!
+		Return "ribbonpanelitem"  
+								
+	Case ribbonsmallbuttonitem!
+		Return "ribbonsmallbuttonitem"  
+								
+	Case ribbontabbuttonitem!
+		Return "ribbontabbuttonitem"  
 	
 	Case roundrectangle!
 		Return "roundrectangle"  
@@ -17026,6 +17105,12 @@ Choose Case ae_object
 	
 	Case timing!
 		Return "timing"  
+								
+	Case tokenrequest!
+		Return "tokenrequest"  
+								
+	Case tokenresponse!
+		Return "tokenresponse"  
 	
 	Case traceactivitynode!
 		Return "traceactivitynode"  
@@ -17125,6 +17210,9 @@ Choose Case ae_object
 	
 	Case vtrackbar!
 		Return "vtrackbar"  
+		
+	Case webbrowser!
+		Return "webbrowser"  
 	
 	Case window!
 		Return "window"  
