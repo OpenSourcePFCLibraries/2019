@@ -725,6 +725,8 @@ protected function string of_typeof (windowobject awo_control);/////////////////
 // 6.0	Changed to use new constants.
 // 7.0	Added new controls hprogressbar!, htrackbar!, vprogressbar!,
 //			vtrackbar!, picturehyperlink!, statichyperlink!
+//	2019 R2 Added bew controls animation!, datepicker!, inkedit!, 
+//			inkpicture!, monthcalendar!, ribbonbar!, webbrowser!
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -762,7 +764,8 @@ Choose Case awo_control.TypeOf()
 			listview!, multilineedit!, olecontrol!, olecustomcontrol!, omcontrol!, omcustomcontrol!,  &
 			omembeddedcontrol!, picture!, picturebutton!, picturehyperlink!, picturelistbox!,  &
 			radiobutton!, richtextedit!, singlelineedit!, statichyperlink!, statictext!,  &
-			tab!, treeview!, userobject!, vprogressbar!, vscrollbar!, vtrackbar!
+			tab!, treeview!, userobject!, vprogressbar!, vscrollbar!, vtrackbar!, &
+			animation!, datepicker!, inkedit!, inkpicture!, monthcalendar!, ribbonbar!, webbrowser!
 		Return DRAGOBJECT
 	Case  line!
 		Return LINE

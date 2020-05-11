@@ -2617,6 +2617,8 @@ protected function string of_gettype (powerobject apo_control);/////////////////
 //						6.0   Initial version
 // 					7.0	Added new controls hprogressbar!, htrackbar!, vprogressbar!,
 //								vtrackbar!, picturehyperlink!, statichyperlink!
+//					2019 R2	Added controls animation!, datepicker!, incedit!, inkpicture!,
+//								monthcalendar!, ribbonbar!, webbrowser!
 //////////////////////////////////////////////////////////////////////////////
 /*
  * Open Source PowerBuilder Foundation Class Libraries
@@ -2640,10 +2642,14 @@ protected function string of_gettype (powerobject apo_control);/////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 choose case apo_control.TypeOf()
+	case Animation!
+		return 'animation'
 	case DataWindow!
 		return 'datawindow'
 	case DataStore!
 		return 'datastore'			
+	case Datepicker!
+		return 'datepicker'
 	case TreeView!
 		return 'treeview'		
 	case ListView!
@@ -2668,8 +2674,14 @@ choose case apo_control.TypeOf()
 		return 'groupbox'		
 	case HScrollBar!
 		return 'hscrollbar'
+	case Inkedit!
+		return 'inkedit'
+	case Inkpicture!
+		return 'inkpicture'
 	case ListBox!
 		return 'listbox'
+	case Monthcalendar!
+		return 'monthcalendar'
 	case MultilineEdit!
 		return 'multilineedit'		
 	case OMControl!
@@ -2678,6 +2690,8 @@ choose case apo_control.TypeOf()
 		return 'picture'
 	case RadioButton!
 		return 'radiobutton'		
+	case Ribbonbar!
+		return 'ribbonbar'
 	case SingleLineEdit!
 		return 'singlelineedit'
 	case StaticText!
@@ -2706,6 +2720,8 @@ choose case apo_control.TypeOf()
 		return 'statichyperlink'
 	case PictureHyperlink!
 		return 'picturehyperlink'
+	case webbrowser!
+		return 'webbrowser'
 	case else
 		return '!'
 end choose
@@ -2714,11 +2730,11 @@ return '!'
 end function
 
 on pfc_n_cst_luw.create
-TriggerEvent( this, "constructor" )
+call super::create
 end on
 
 on pfc_n_cst_luw.destroy
-TriggerEvent( this, "destructor" )
+call super::destroy
 end on
 
 event constructor;//////////////////////////////////////////////////////////////////////////////
