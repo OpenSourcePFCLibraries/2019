@@ -1080,6 +1080,8 @@ protected function integer of_restorefocuspoint (graphicobject ago_focus);//////
 //	5.0.03 Initial version
 // 7.0	Added new controls hprogressbar!, htrackbar!, vprogressbar!,
 //			vtrackbar!, picturehyperlink!, statichyperlink!
+// 2019 R2 Added new controls animation!, datepicker!, inkedit!, 
+//			inkpicture!, monthcalendar!, ribbonbar!, webbrowser!
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1131,7 +1133,8 @@ If IsValid(ago_focus) Then
 					listview!, multilineedit!, olecontrol!, olecustomcontrol!, omcontrol!, omcustomcontrol!,  &
 					omembeddedcontrol!, picture!, picturebutton!, picturehyperlink!, picturelistbox!,  &
 					radiobutton!, richtextedit!, singlelineedit!, statichyperlink!, statictext!,  &
-					tab!, treeview!, userobject!, vprogressbar!, vscrollbar!, vtrackbar!
+					tab!, treeview!, userobject!, vprogressbar!, vscrollbar!, vtrackbar!, &
+					animation!, datepicker!, inkedit!, inkpicture!, monthcalendar!, ribbonbar!, webbrowser!
 				ldrg_obj = ago_focus
 				li_rc = ldrg_obj.SetFocus()
 
