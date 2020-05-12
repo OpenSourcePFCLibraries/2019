@@ -81,4 +81,6 @@ Save Format v3.0(19990112)
  "pfcmain\\pfc_u_progressbar.sru" "pfcmain\\pfcmain.pbl";
  "pfcmain\\pfc_n_dda.sru" "pfcmain\\pfcmain.pbl";
  "pfcmain\\pfc_u_calendar.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_u_rbb.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_u_wb.sru" "pfcmain\\pfcmain.pbl";
 @end;
