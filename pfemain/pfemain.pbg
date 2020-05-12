@@ -76,4 +76,6 @@ Save Format v3.0(19990112)
  "pfemain\\u_tvs.sru" "pfemain\\pfemain.pbl";
  "pfemain\\u_st.sru" "pfemain\\pfemain.pbl";
  "pfemain\\u_tv.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\u_rbb.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\u_wb.sru" "pfemain\\pfemain.pbl";
 @end;
