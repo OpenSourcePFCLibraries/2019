@@ -83,4 +83,10 @@ Save Format v3.0(19990112)
  "pfcmain\\pfc_u_calendar.sru" "pfcmain\\pfcmain.pbl";
  "pfcmain\\pfc_u_rbb.sru" "pfcmain\\pfcmain.pbl";
  "pfcmain\\pfc_u_wb.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_n_coderobject.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_n_crypterobject.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_n_compressorobject.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_n_extractorobject.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_n_httpclient.sru" "pfcmain\\pfcmain.pbl";
+ "pfcmain\\pfc_n_restclient.sru" "pfcmain\\pfcmain.pbl";
 @end;

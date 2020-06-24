@@ -78,4 +78,10 @@ Save Format v3.0(19990112)
  "pfemain\\u_tv.sru" "pfemain\\pfemain.pbl";
  "pfemain\\u_rbb.sru" "pfemain\\pfemain.pbl";
  "pfemain\\u_wb.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\n_coderobject.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\n_crypterobject.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\n_compressorobject.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\n_extractorobject.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\n_httpclient.sru" "pfemain\\pfemain.pbl";
+ "pfemain\\n_restclient.sru" "pfemain\\pfemain.pbl";
 @end;
