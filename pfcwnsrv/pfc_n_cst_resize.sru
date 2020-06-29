@@ -1143,7 +1143,13 @@ For li_cnt = 1 to li_upperbound
 			inv_registered[li_cnt].r_y = inv_registered[li_cnt].r_y + lr_move_deltay
 			Choose Case inv_registered[li_cnt].s_typeof
 				Case DRAGOBJECT
-					ldrg_cntrl.Move (inv_registered[li_cnt].r_x, inv_registered[li_cnt].r_y)
+					IF ldrg_cntrl.TypeOf() = WebBrowser! THEN
+						// Workaround for Bug 4853 in PB 2019 R2, Build 2328
+						ldrg_cntrl.X = inv_registered[li_cnt].r_x
+						ldrg_cntrl.Y = inv_registered[li_cnt].r_y
+					ELSE
+						ldrg_cntrl.Move (inv_registered[li_cnt].r_x, inv_registered[li_cnt].r_y)
+					END IF
 				Case LINE
 					//X moving
 					lln_cntrl.BeginX = inv_registered[li_cnt].r_x
@@ -1173,7 +1179,13 @@ For li_cnt = 1 to li_upperbound
 			inv_registered[li_cnt].r_height = inv_registered[li_cnt].r_height + lr_resize_deltaheight		
 			Choose Case inv_registered[li_cnt].s_typeof
 				Case DRAGOBJECT
-					ldrg_cntrl.Resize (inv_registered[li_cnt].r_width, inv_registered[li_cnt].r_height)
+					IF ldrg_cntrl.TypeOf() = WebBrowser! THEN
+						// Workaround for Bug 4853 in PB 2019 R2, Build 2328
+						ldrg_cntrl.Width = inv_registered[li_cnt].r_width
+						ldrg_cntrl.Height = inv_registered[li_cnt].r_height
+					ELSE
+						ldrg_cntrl.Resize (inv_registered[li_cnt].r_width, inv_registered[li_cnt].r_height)
+					END IF
 					li_width = ldrg_cntrl.Width
 					li_height = ldrg_cntrl.Height
 				Case LINE
