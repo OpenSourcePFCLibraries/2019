@@ -1,9 +1,0 @@
-start session
-set debug true
-scc set connect property logfile "createpbls.log"
-scc connect offline
-scc set target "peat demo app.pbt" importonly
-;scc exclude liblist "pbdom\pbdom170.pbd"
-scc refresh target 3pass
-scc close
-end session

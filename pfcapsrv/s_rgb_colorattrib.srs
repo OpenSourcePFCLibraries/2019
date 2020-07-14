@@ -1,8 +1,0 @@
-HA$PBExportHeader$s_rgb_colorattrib.srs
-$PBExportComments$Color Conversion Service XYZ color attrib
-global type s_rgb_colorattrib from structure
-	byte		r
-	byte		g
-	byte		b
-end type
-
