@@ -375,16 +375,19 @@ public function long of_fileread (string as_filename, ref blob ablb_data);//////
 //2018/04/12 Changed to FileReadEx from FileRead, changed filelock from deafult LockReadWrite! to LockWrite!
 integer		li_FileNo
 long			ll_FileLen
+blob			lblb_data
 
 li_FileNo = FileOpen(as_FileName,StreamMode!,Read!,LockWrite!)
 If li_FileNo < 0 Then Return -1
 
 // Empty the blob argument
-setnull(ablb_Data)
+ablb_Data = lblb_data
 
-ll_FileLen = FileReadEx(li_FileNo, ablb_Data)
+ll_FileLen = FileReadEx(li_FileNo, lblb_Data)
 
 FileClose(li_FileNo)
+
+IF ll_FileLen >= 0 THEN ablb_data = lblb_data
 
 Return ll_FileLen
 end function
