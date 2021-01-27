@@ -4,7 +4,7 @@ global type pbdom_comment from pbdom_characterdata
 end type
 end forward
 
-global type pbdom_comment from pbdom_characterdata native "PBDOM190.pbx"
+global type pbdom_comment from pbdom_characterdata native "PBDOM.pbx"
 public function  string				GetName()
 public function  string				GetText()
 public function  boolean				GetContent(ref pbdom_object pbdom_object_array[])

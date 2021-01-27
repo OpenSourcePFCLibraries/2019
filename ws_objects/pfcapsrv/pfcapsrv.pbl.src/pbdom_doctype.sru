@@ -4,7 +4,7 @@ global type pbdom_doctype from pbdom_object
 end type
 end forward
 
-global type pbdom_doctype from pbdom_object native "PBDOM190.pbx"
+global type pbdom_doctype from pbdom_object native "PBDOM.pbx"
 public function  string			GetName()
 public function  string			GetText()
 public function  boolean			GetContent(ref pbdom_object pbdom_object_array[])

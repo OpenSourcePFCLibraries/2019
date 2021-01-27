@@ -4,7 +4,7 @@ global type pbdom_object from nonvisualobject
 end type
 end forward
 
-global type pbdom_object from nonvisualobject native "PBDOM190.pbx"
+global type pbdom_object from nonvisualobject native "PBDOM.pbx"
 public function  string			GetName()
 public function  string			GetText()
 public function  boolean			GetContent(ref pbdom_object pbdom_object_array[])

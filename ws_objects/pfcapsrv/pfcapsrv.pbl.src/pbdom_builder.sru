@@ -4,7 +4,7 @@ global type pbdom_builder from nonvisualobject
 end type
 end forward
 
-global type pbdom_builder from nonvisualobject native "PBDOM190.pbx"
+global type pbdom_builder from nonvisualobject native "PBDOM.pbx"
 public function  pbdom_document BuildFromString(string strXMLString)
 public function  pbdom_document BuildFromDataStore(datastore datastore_ref)
 public function  pbdom_document BuildFromFile(string strURL)
