@@ -94,6 +94,7 @@ public function unsignedinteger of_getsystemmetrics (integer ai_index)
 public function boolean of_getclientrect (unsignedlong vul_hwnd, ref long rl_left, ref long rl_top, ref long rl_right, ref long rl_bottom)
 public function longlong of_getfreememory ()
 public function longlong of_getphysicalmemory ()
+public function string of_getpbvmname ()
 end prototypes
 
 public function unsignedinteger of_findwindow (string as_window_name);//////////////////////////////////////////////////////////////////////////////
@@ -661,6 +662,81 @@ public function longlong of_getphysicalmemory ();///////////////////////////////
 return -1
 end function
 
+public function string of_getpbvmname ();/////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_getPBVMName
+//
+//	Access:  			public
+//
+//	Arguments:		None
+//
+//	Returns:  		string
+//
+//	Description: 	Returns the value of the PBVMxxx.DLL's name
+//
+/////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version			2019 R3				Initial version
+//
+/////////////////////////////////////////////////////////////////////////
+//
+// Open Source PowerBuilder Foundation Class Libraries
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted in accordance with the MIT License
+// 
+// https://opensource.org/licenses/MIT
+// 
+// This software consists of voluntary contributions made by many
+// individuals and was originally based on software copyright (c) 
+// 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+// information on the Open Source PowerBuilder Foundation Class
+// Libraries see https://github.com/OpenSourcePFCLibraries
+//
+/////////////////////////////////////////////////////////////////////////
+
+Environment le_env
+String ls_vmname
+Integer li_major
+
+GetEnvironment(le_env)
+li_major = le_env.PBMajorRevision
+choose case li_major
+		
+	case 19
+		if le_env.PBMinorRevision > 1 then
+			// pb2019 R3 or higher, R3 has a minorRevision of 2 (no more numbers in the DLL names from that revision on)
+			ls_vmname = "pbvm.dll" 
+		else 
+			// pb2019 R1 or R2, R1. R1 has a minorRevision of 0 and R2 has a minorRevision of 1
+			ls_vmname = "pbvm190.dll" 
+		end if
+	
+	// Supporting some previous powerbuilder versions, though these should really use their 'own' version of pfc:
+	case 12, 17
+		choose case le_env.PBMinorRevision
+			case 5
+				ls_vmname = "pbvm" + String(li_major) + "5.dll"
+			case 6
+				ls_vmname = "pbvm" + String(li_major) + "6.dll"
+			case else
+				ls_vmname = "pbvm" + String(li_major) + "0.dll"
+		end choose
+	
+	case IS > 19 // 20, 21, 22, etc. No more numbering in the dll names, not even in revisions:
+		ls_vmname = "pbvm.dll"
+		
+	case else
+		ls_vmname = "" // you should not be using this version of pfc
+		
+end choose
+
+Return ls_vmname
+
+end function
+
 on pfc_n_cst_platform.create
 call super::create
 end on
@@ -668,4 +744,69 @@ end on
 on pfc_n_cst_platform.destroy
 call super::destroy
 end on
+
+event constructor;call super::constructor;//////////////////////////////////////////////////////////////////////////////
+//
+//	Event: 			constructor
+//
+//	Arguments:		(none)
+//
+//	Returns:  		Long - The value zero (0) is always returned by this event.
+//
+//	Description:	assigns the correct values for is_classes[] depending on powerbuilder version
+//
+//////////////////////////////////////////////////////////////////////////////
+//	
+//	Revision History
+//
+//	Version
+//	2019 R3  Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2013, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+string ls_PBVMName
+
+ls_PBVMName = this.of_getPBVMName()
+choose case ls_PBVMName
+	case "pbvm.dll"  // pb2019 R3 (and most probably later versions too)
+		is_ClassName[1] = "FNWND3" // mdi window
+		is_ClassName[2] = "FNWNS3" // response window
+	case "pbvm170.dll" // pb2017
+		is_ClassName[1] = "FNWND3170" // mdi window
+		is_ClassName[2] = "FNWNS3170" // response window
+		is_ClassName[3] = "AfxMDIFrame100su" // pb2017 for "dockable MDI" 
+	case "pbvm190.dll"  // pb2019 R1 / R2
+		is_ClassName[1] = "FNWND3190" // mdi window
+		is_ClassName[2] = "FNWNS3190" // response window
+		// dockable MDI is now obsolete in pb2019 R2, commented:
+		//	is_ClassName[3] = "AfxMDIFrame100su" // pb2019 for "dockable MDI", same as PB2017
+	case "pbvm126" // pb 12.6
+		is_ClassName[1] = "FNWND3126" // mdi window
+		is_ClassName[2] = "FNWNS3126" // response window
+	case "pbvm125" // pb 12.5
+		is_ClassName[1] = "FNWND3125" // mdi window
+		is_ClassName[2] = "FNWNS3125" // response window	
+end choose
+
+end event
 
