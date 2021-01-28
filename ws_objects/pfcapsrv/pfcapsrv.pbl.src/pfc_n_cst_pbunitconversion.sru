@@ -1019,6 +1019,7 @@ public function decimal of_centimeterstopbunitsy (decimal vdec_centimeters);////
 //	Revision History
 //
 //	Version			12.5				Initial version
+//	Version			2019 R3			Small correction on Return value
 //
 /////////////////////////////////////////////////////////////////////////
 //
@@ -1046,7 +1047,7 @@ ldec_inches					= Round(invo_measurementConversion.of_distance_centimetersToInch
 Decimal						ldec_Twips
 ldec_Twips					= of_InchesToTwipsY(ldec_Inches)
 
-Return(PixelsToUnits(ldec_Twips / of_TwipsPerPixelY(), XPixelsToUnits!))
+Return(PixelsToUnits(ldec_Twips / of_TwipsPerPixelY(), YPixelsToUnits!))
 end function
 
 public function decimal of_centimeterstopixelsx (decimal vdec_centimeters);/////////////////////////////////////////////////////////////////////////
