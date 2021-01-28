@@ -4,7 +4,7 @@ global type pbdom_exception from exception
 end type
 end forward
 
-global type pbdom_exception from exception native "PBDOM190.pbx"
+global type pbdom_exception from exception native "PBDOM.pbx"
 public function  long				GetExceptionCode()
 end type
 global pbdom_exception pbdom_exception
