@@ -13,7 +13,8 @@ global variables
 n_cst_appmanager gnv_app 
 end variables
 global type generic_pfc_app from application
- end type
+ string appruntimeversion = "19.2.0.2670"
+end type
 global generic_pfc_app generic_pfc_app
 
 on generic_pfc_app.create

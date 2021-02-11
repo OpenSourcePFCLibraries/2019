@@ -3,6 +3,8 @@ $PBExportComments$PFC Master Window class
 forward
 global type pfc_w_master from window
 end type
+type st_debuginfoclass from statictext within pfc_w_master
+end type
 end forward
 
 global type pfc_w_master from window
@@ -53,6 +55,7 @@ event type integer pfc_updateobjects ( powerobject apo_control[],  boolean ab_ac
 event type integer pfc_updatespendingref ( powerobject apo_control[],  ref powerobject apo_pending[] )
 event pfc_preprint ( )
 event pfc_postprint ( )
+st_debuginfoclass st_debuginfoclass
 end type
 global pfc_w_master pfc_w_master
 
@@ -91,6 +94,8 @@ powerobject		ipo_tempupdateobjects[]
 n_cst_luw		inv_luw
 
 boolean		ib_IsObsolete
+
+n_cst_classinfo	inv_info
 end variables
 
 forward prototypes
@@ -244,6 +249,10 @@ End If
 
 // No objects recognized the message
 Return 0
+end event
+
+event pfc_postopen();st_debuginfoclass.visible = isvalid( gnv_app.inv_debug )
+
 end event
 
 event move;//////////////////////////////////////////////////////////////////////////////
@@ -4057,9 +4066,12 @@ End if
 end event
 
 on pfc_w_master.create
+this.st_debuginfoclass=create st_debuginfoclass
+this.Control[]={this.st_debuginfoclass}
 end on
 
 on pfc_w_master.destroy
+destroy(this.st_debuginfoclass)
 end on
 
 event resize;//////////////////////////////////////////////////////////////////////////////
@@ -4197,6 +4209,10 @@ of_SetBase (False)
 of_SetResize (False)
 of_SetPreference (False)
 of_SetLogicalUnitofWork (False)
+
+if isvalid( inv_info ) then
+	destroy inv_info
+end if
 end event
 
 event activate;//////////////////////////////////////////////////////////////////////////////
@@ -4241,6 +4257,29 @@ event activate;/////////////////////////////////////////////////////////////////
 if isvalid(gnv_app.inv_mru) then
 	this.post event pfc_mrurestore()
 end if
+
+end event
+
+type st_debuginfoclass from statictext within pfc_w_master
+boolean visible = false
+integer width = 46
+integer height = 44
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Tahoma"
+string pointer = "Help2!"
+long textcolor = 33554432
+long backcolor = 255
+boolean focusrectangle = false
+end type
+
+event clicked;inv_info = create n_cst_classinfo
+gnv_app.inv_debug.of_openclassinfo( inv_info )
+inv_info.of_parse( parent )
+
 
 end event
 
