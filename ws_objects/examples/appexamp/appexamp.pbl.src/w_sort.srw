@@ -22,13 +22,13 @@ end type
 end forward
 
 global type w_sort from w_main
-int X=421
-int Y=68
-int Width=2117
-int Height=1636
-boolean TitleBar=true
-string Title="PFC Example - Sort Service Dialogs"
-boolean Resizable=false
+integer x = 421
+integer y = 68
+integer width = 2117
+integer height = 1636
+string title = "PFC Example - Sort Service Dialogs"
+boolean resizable = false
+long backcolor = 134217857
 dw_1 dw_1
 cb_sort cb_sort
 cb_close cb_close
@@ -139,13 +139,13 @@ destroy(this.gb_1)
 end on
 
 type dw_1 from u_dw within w_sort
-int X=27
-int Y=372
-int Width=2030
-int Height=1008
-int TabOrder=0
-string DataObject="d_customerlist"
-boolean HScrollBar=true
+integer x = 27
+integer y = 372
+integer width = 2030
+integer height = 1008
+integer taborder = 0
+string dataobject = "d_customerlist"
+boolean hscrollbar = true
 end type
 
 event constructor;//////////////////////////////////////////////////////////////////////////////
@@ -249,10 +249,10 @@ return this.Retrieve()
 end event
 
 type cb_sort from u_cb within w_sort
-int X=1321
-int Y=1424
-int TabOrder=20
-string Text="&Set Sort"
+integer x = 1321
+integer y = 1424
+integer taborder = 20
+string text = "&Set Sort"
 end type
 
 event clicked;//////////////////////////////////////////////////////////////////////////////
@@ -270,11 +270,11 @@ dw_1.event pfc_sortdlg()
 end event
 
 type cb_close from u_cb within w_sort
-int X=1696
-int Y=1424
-int TabOrder=30
-string Text="Close"
-boolean Cancel=true
+integer x = 1696
+integer y = 1424
+integer taborder = 30
+string text = "Close"
+boolean cancel = true
 end type
 
 event clicked;//////////////////////////////////////////////////////////////////////////////
@@ -291,11 +291,11 @@ parent.event pfc_close()
 end event
 
 type rb_1 from u_rb within w_sort
-int X=59
-int Y=112
-int Width=731
-string Text="Drag/Drop &Columns Style"
-boolean Checked=true
+integer x = 59
+integer y = 112
+integer width = 731
+string text = "Drag/Drop &Columns Style"
+boolean checked = true
 end type
 
 event clicked;//////////////////////////////////////////////////////////////////////////////
@@ -312,11 +312,11 @@ dw_1.inv_sort.of_SetStyle(dw_1.inv_sort.DRAGDROP)
 end event
 
 type rb_3 from u_rb within w_sort
-int X=59
-int Y=200
-int Width=731
-boolean BringToTop=true
-string Text="&Drop-down List Box Style"
+integer x = 59
+integer y = 200
+integer width = 731
+boolean bringtotop = true
+string text = "&Drop-down List Box Style"
 end type
 
 event clicked;//////////////////////////////////////////////////////////////////////////////
@@ -333,11 +333,11 @@ dw_1.inv_sort.of_SetStyle(dw_1.inv_sort.DROPDOWNLISTBOX)
 end event
 
 type rb_2 from u_rb within w_sort
-int X=832
-int Y=112
-int Width=731
-boolean BringToTop=true
-string Text="Si&mple Single Column Style"
+integer x = 832
+integer y = 112
+integer width = 731
+boolean bringtotop = true
+string text = "Si&mple Single Column Style"
 end type
 
 event clicked;//////////////////////////////////////////////////////////////////////////////
@@ -354,11 +354,11 @@ dw_1.inv_sort.of_SetStyle(dw_1.inv_sort.SIMPLE)
 end event
 
 type rb_4 from u_rb within w_sort
-int X=832
-int Y=200
-int Width=731
-boolean BringToTop=true
-string Text="&PowerBuilder Default Style"
+integer x = 832
+integer y = 200
+integer width = 731
+boolean bringtotop = true
+string text = "&PowerBuilder Default Style"
 end type
 
 event clicked;//////////////////////////////////////////////////////////////////////////////
@@ -375,13 +375,13 @@ dw_1.inv_sort.of_SetStyle(dw_1.inv_sort.DEFAULT)
 end event
 
 type gb_1 from u_gb within w_sort
-int X=27
-int Y=32
-int Width=2030
-int Height=284
-int TabOrder=10
-string Text="Select a Sort Dialog Style"
-long TextColor=33554687
-long BackColor=82889382
+integer x = 27
+integer y = 32
+integer width = 2030
+integer height = 284
+integer taborder = 10
+long textcolor = 33554687
+long backcolor = 82889382
+string text = "Select a Sort Dialog Style"
 end type
 
