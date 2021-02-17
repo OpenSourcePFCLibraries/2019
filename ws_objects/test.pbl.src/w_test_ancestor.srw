@@ -31,6 +31,12 @@ destroy(this.sle_1)
 destroy(this.cb_1)
 end on
 
+event close;call super::close;if isvalid( gnv_app.inv_debug ) then
+	gnv_app.of_setdebug( false )
+end if
+
+end event
+
 type st_debuginfoclass from w_main`st_debuginfoclass within w_test_ancestor
 end type
 
@@ -64,21 +70,11 @@ fontcharset fontcharset = ansi!
 fontpitch fontpitch = variable!
 fontfamily fontfamily = swiss!
 string facename = "Tahoma"
-string text = "none"
+string text = "Debug Ini"
 end type
 
-event clicked;oleobject lole, lole_parent
-integer li_rc
-
-lole_parent = create oleobject
-li_rc = lole_parent.connecttonewobject("scanprofiles.scanprofilemgr")
-
-if li_rc = 0 then
-	lole = create oleobject
-	li_rc = lole.connecttonewobject("scanprofiles.scanprofileui")
-	if li_rc = 0 then
-		li_rc = lole.ScanProfileDialog( handle(lole_parent) )
-	end if
+event clicked;if isvalid( gnv_app.inv_debug ) then
+	gnv_app.inv_debug.of_openini( true)
 end if
 
 end event

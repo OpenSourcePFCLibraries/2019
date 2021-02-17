@@ -25,12 +25,12 @@ Public:
 application	iapp_object
 environment	ienv_object
 n_cst_trregistration	inv_trregistration
-n_cst_dwcache	inv_dwcache
-n_cst_debug	inv_debug
-n_cst_error	inv_error
-n_cst_security	inv_security
+n_cst_dwcache			inv_dwcache
+n_cst_debug			inv_debug
+n_cst_error				inv_error
+n_cst_security			inv_security
 n_cst_apppreference	inv_apppref
-n_cst_mru		inv_mru
+n_cst_mru				inv_mru
 
 Protected:
 boolean	ib_microhelp

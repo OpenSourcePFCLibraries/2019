@@ -45,6 +45,7 @@ public function boolean of_isdwproperty ()
 public function integer of_openjson (n_cst_json anv_json)
 public function integer of_closejson ()
 public function integer of_openclassinfo (n_cst_classinfo anv_classinfo)
+public function integer of_openini (boolean ab_switch)
 end prototypes
 
 public function integer of_setsqlspy (boolean ab_switch);//////////////////////////////////////////////////////////////////////////////
@@ -783,6 +784,70 @@ if anv_classinfo.of_get_repository().sharedata( ids_debugclassinfo ) = -1 then  
 Return Open(w_debugClassInfo)
 end function
 
+public function integer of_openini (boolean ab_switch);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_OpenIni
+//
+//	Access:  		public
+//
+//	ab_switch	True to open DebugLog window.
+//					False to close DebugLog window.
+//
+//	Returns:  	integer
+//					Return value of Open or Close PowerBuilder call.
+//					0 if no action to open or close the window is taken.
+//					If any argument's value is NULL, function returns -1.
+//
+//	Description:	Open or Close the DebugLog window.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2019   Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+//Check arguments
+If IsNull(ab_switch) Then
+	Return -1
+End If
+
+If ab_switch Then
+	Return Open(w_debugini)
+Else
+	If IsValid(w_debuglog) Then
+		Return Close(w_debugini)
+	End If
+End If
+
+Return 0
+
+end function
+
 on pfc_n_cst_debug.create
 call super::create
 end on
@@ -914,5 +979,11 @@ of_Closejson ()
 If IsValid(ids_debugjson) Then
  	Destroy ids_debugjson
 End If
+
+// Close Debug Ini Window
+If IsValid(w_debugini) Then
+	of_OpenIni (False)
+End If
+
 end event
 

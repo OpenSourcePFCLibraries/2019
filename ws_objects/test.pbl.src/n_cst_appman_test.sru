@@ -17,6 +17,7 @@ call super::destroy
 end on
 
 event pfc_open;call super::pfc_open;this.of_setdebug(true)
+this.of_setappinifile( "pc_test.ini ")
 open(w_test_ancestor)
 end event
 
