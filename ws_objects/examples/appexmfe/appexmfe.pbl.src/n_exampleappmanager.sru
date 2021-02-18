@@ -68,6 +68,8 @@ of_SetLogo ( "pfcexamp.bmp" )
 // Application copyright message
 of_SetCopyRight ( "Copyright (c) 2004-" + String ( Year ( ld_now ), "0000" ) + " Open Source PowerBuilder Foundation Class Libraries" )
 
+this.of_SetAppIniFile("examples.ini")
+
 //Start the Application's MRU service
 of_SetMRU ( True )
 
@@ -111,23 +113,28 @@ long    		ll_return
 string			ls_initpath
 string			ls_regkey
 string			ls_temp
-
-// Initialize SQLCA
-SQLCA.DBMS 		= "ODBC"
-SQLCA.DBParm 	= "ConnectString='DSN=EAS Demo DB V120;UID=dba;PWD=sql',DelimitIdentifier='Yes'"
-
-//Connect to application database.
-If SQLCA.of_connect (  ) <> 0 Then
-	MessageBox ( "Cannot Connect to Database", SQLCA.sqlerrtext, stopsign! )
-	Halt Close
-	Return
-End If
-
-//Give the transaction a name.
-SQLCA.of_SetName ( "Main-Trans" )
+String			ls_inifile
 
 //Enable the Error service.
 of_SetError ( True )
+
+ls_inifile = gnv_app.of_GetAppIniFile()
+IF SQLCA.of_Init(ls_inifile, "Database") = -1 THEN
+	this.inv_error.of_message(gnv_app.iapp_object.DisplayName, + &
+			"Error initializing connection information, .INI file not found.")
+	Halt Close
+	Return
+ELSE
+	IF SQLCA.of_Connect() = -1 THEN
+		this.inv_error.of_message(gnv_app.iapp_object.DisplayName, + &
+				"Error connecting to Database.", StopSign!, OK!)
+		Halt Close
+		Return
+	END IF 
+END IF
+
+//Give the transaction a name.
+SQLCA.of_SetName ( "Main-Trans" )
 
 //Set the data source for loading predefined messages.
 inv_error.of_SetPredefinedSource ( SQLCA )
