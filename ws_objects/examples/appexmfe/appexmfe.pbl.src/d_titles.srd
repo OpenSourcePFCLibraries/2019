@@ -8,12 +8,7 @@ detail(height=84 color="536870912" )
 table(column=(type=char(60) update=yes updatewhereclause=yes name=title dbname="examples.title" )
  column=(type=long update=yes updatewhereclause=yes key=yes name=example_id dbname="examples.example_id" )
  column=(type=char(128) update=yes updatewhereclause=yes name=window dbname="examples.window" )
- retrieve="  SELECT ~"examples~".~"title~",   
-         ~"examples~".~"example_id~",   
-         ~"examples~".~"window~"  
-    FROM ~"examples~"  
-   WHERE ~"examples~".~"window~" = :classname    
-" update="examples" updatewhere=1 updatekeyinplace=no arguments=(("classname", string)) )
+retrieve="PBSELECT( VERSION(400) TABLE(NAME=~"examples~" ) COLUMN(NAME=~"examples.title~") COLUMN(NAME=~"examples.example_id~") COLUMN(NAME=~"examples.window~") WHERE(    EXP1 =~"~~~"examples~~~".~~~"window~~~"~"   OP =~"=~"    EXP2 =~":classname~" ) ) ARG(NAME = ~"classname~" TYPE = number) " update="examples" updatewhere=1 updatekeyinplace=no arguments=(("classname", string)) )
 text(band=header alignment="2" text="Title" border="0" color="0" x="5" y="4" height="64" width="1317" html.valueishtml="0"  name=title_t visible="1"  font.face="Arial" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
 text(band=header alignment="2" text="Example Id" border="0" color="0" x="1326" y="4" height="64" width="329" html.valueishtml="0"  name=example_id_t visible="1"  font.face="Arial" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
 text(band=header alignment="2" text="Window" border="0" color="0" x="1659" y="4" height="64" width="2395" html.valueishtml="0"  name=window_t visible="1"  font.face="Arial" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
@@ -30,4 +25,3 @@ export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
 import.xml()
 export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
 export.xhtml()
- 
