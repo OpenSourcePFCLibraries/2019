@@ -45,7 +45,6 @@ this.of_Splash(1)
 // Initialize the various functionality of this service
 this.of_SetTrRegistration(TRUE)
 this.of_SetError(TRUE)
-inv_error.of_SetPredefinedSource(SQLCA)
 
 // Connect to database
 ls_inifile = gnv_app.of_GetAppIniFile()
@@ -57,6 +56,7 @@ ELSE
 		this.inv_error.of_message(gnv_app.iapp_object.DisplayName, + &
 				"Error connecting to Database.", StopSign!, OK!)
 	ELSE
+		inv_error.of_SetPredefinedSource(SQLCA)
 		Open(w_f_peat)
 	END IF 
 END IF
