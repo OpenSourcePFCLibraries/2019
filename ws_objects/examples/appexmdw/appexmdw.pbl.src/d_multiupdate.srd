@@ -16,23 +16,23 @@ table(column=(type=long update=yes updatewhereclause=yes key=yes name=customer_i
  column=(type=long updatewhereclause=yes name=sales_order_items_line_id dbname="sales_order_items.line_id" )
  column=(type=long updatewhereclause=yes name=sales_order_items_id dbname="sales_order_items.id" )
  column=(type=long updatewhereclause=yes name=sales_order_items_prod_id dbname="sales_order_items.prod_id" )
- retrieve="  SELECT dba.customer.id,   
-         dba.customer.fname,   
-         dba.customer.lname,   
-         dba.customer.phone,   
-         dba.sales_order_items.quantity,
-		dba.sales_order.id,   
-         dba.sales_order.order_date,   
-         dba.sales_order_items.line_id,   
-         dba.sales_order_items.id,   
-         dba.sales_order_items.prod_id  
-    FROM dba.customer,   
-         dba.product,   
-         dba.sales_order,   
-         dba.sales_order_items  
-   WHERE ( dba.customer.id = dba.sales_order.cust_id ) and  
-         ( dba.sales_order.id = dba.sales_order_items.id ) and  
-         ( dba.product.id = dba.sales_order_items.prod_id )    
+ retrieve="  SELECT customer.id,   
+         customer.fname,   
+         customer.lname,   
+         customer.phone,   
+         sales_order_items.quantity,
+		sales_order.id,   
+         sales_order.order_date,   
+         sales_order_items.line_id,   
+         sales_order_items.id,   
+         sales_order_items.prod_id  
+    FROM customer,   
+         product,   
+         sales_order,   
+         sales_order_items  
+   WHERE ( customer.id = sales_order.cust_id ) and  
+         ( sales_order.id = sales_order_items.id ) and  
+         ( product.id = sales_order_items.prod_id )    
 " update="customer" updatewhere=1 updatekeyinplace=yes )
 text(band=header alignment="2" text="Customer
 ID" border="6" color="0" x="9" y="12" height="104" width="297" html.valueishtml="0"  name=customer_id_t visible="1"  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="82889382" )
