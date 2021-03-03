@@ -12,18 +12,18 @@ table(column=(type=long update=yes updatewhereclause=yes key=yes name=complexity
  column=(type=char(50) update=yes updatewhereclause=yes name=name dbname="project_complexity.name" )
  column=(type=decimal(2) update=yes updatewhereclause=yes name=estimated_hours dbname="project_complexity.estimated_hours" )
  column=(type=long updatewhereclause=yes name=dependent_count dbname="compute_0006" )
- retrieve="  SELECT ~"project_complexity~".~"complexity_id~",
-			~"project_complexity~".~"complexity_id~" complexity,   
-         ~"project_complexity~".~"project_id~",   
-         ~"project_complexity~".~"name~",   
-         ~"project_complexity~".~"estimated_hours~",   
+ retrieve="  SELECT project_complexity.complexity_id,
+			project_complexity.complexity_id as complexity,   
+         project_complexity.project_id,   
+         project_complexity.name,   
+         project_complexity.estimated_hours,   
          (SELECT count(*)  
-    			FROM ~"project_category_item~"  
-   				WHERE ~"project_category_item~".~"project_id~" = :project_id AND   
-							~"project_category_item~".~"complexity_id~" = complexity)  
-    FROM ~"project_complexity~"  
-   WHERE ~"project_complexity~".~"project_id~" = :project_id   
-ORDER BY ~"project_complexity~".~"name~" ASC   
+    			FROM project_category_item  
+   				WHERE project_category_item.project_id = :project_id AND   
+							project_category_item.complexity_id = project_complexity.complexity_id)  
+    FROM project_complexity  
+   WHERE project_complexity.project_id = :project_id   
+ORDER BY project_complexity.name ASC   
 " update="project_complexity" updatewhere=1 updatekeyinplace=no arguments=(("project_id", number)) )
 text(band=header alignment="2" text="Complexity Name"border="6" color="0" x="10" y="8" height="53" width="1303"  name=name_t  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
 text(band=header alignment="0" text="  Estimate Hours"border="6" color="0" x="1335" y="8" height="53" width="403"  name=estimated_hours_t  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )

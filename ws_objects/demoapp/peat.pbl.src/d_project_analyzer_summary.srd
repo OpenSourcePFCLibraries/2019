@@ -12,32 +12,31 @@ table(column=(type=char(50) updatewhereclause=yes name=group_item dbname="comput
  column=(type=decimal(10) updatewhereclause=yes name=estimated_hours dbname="compute_0004" )
  column=(type=decimal(2) updatewhereclause=yes name=project_derived_item_actual_hours dbname="project_derived_item.actual_hours" )
  retrieve="  SELECT 'Derived Items',
-			~"project_derived_item~".~"name~",
-			~"project_derived_item~".~"rate~", 
-            (SELECT sum(~"project_category_item~".~"estimated_hours~"*    
-        					  ~"project_role~".~"multipler~" ) * (~"project_derived_item~".~"percentage~" / 100)
-    			FROM ~"project_category_item~",   
-        				~"project_complexity~",   
-        				~"project_role~"  
-  				 WHERE ( ~"project_complexity~".~"complexity_id~" = ~"project_category_item~".~"complexity_id~" ) and  
-       				  ( ~"project_category_item~".~"role_id~" = ~"project_role~".~"role_id~" ) and  
-       				  ( ( ~"project_category_item~".~"project_id~" = :project_id) )),
-			~"project_derived_item~".~"actual_hours~"
-      FROM ~"project_derived_item~"
-   WHERE ( ( ~"project_derived_item~".~"project_id~" = :project_id ) )
-
+			project_derived_item.name,
+			project_derived_item.rate, 
+            (SELECT sum(project_category_item.estimated_hours*    
+        					  project_role.multipler ) * (project_derived_item.percentage / 100)
+    			FROM project_category_item,   
+        				project_complexity,   
+        				project_role  
+  				 WHERE ( project_complexity.complexity_id = project_category_item.complexity_id ) and  
+       				  ( project_category_item.role_id = project_role.role_id ) and  
+       				  ( ( project_category_item.project_id = :project_id) )),
+			project_derived_item.actual_hours
+      FROM project_derived_item
+   WHERE ( ( project_derived_item.project_id = :project_id ) )
    UNION   
-  SELECT ~"project_category~".~"name~",   
-         ~"project_category_item~".~"name~",   
-         ~"project_role~".~"rate~",   
-         (~"project_category_item~".~"estimated_hours~" * ~"project_role~".~"multipler~"),
-        	~"project_category_item~".~"actual_hours~"
-    FROM ~"project_category_item~",   
-         ~"project_role~",   
-         ~"project_category~"  
-   WHERE ( ~"project_category_item~".~"role_id~" = ~"project_role~".~"role_id~" ) and  
-         ( ~"project_category~".~"category_id~" = ~"project_category_item~".~"category_id~" ) and  
-         ( ( ~"project_category_item~".~"project_id~" = :project_id ) )
+  SELECT project_category.name,   
+         project_category_item.name,   
+         project_role.rate,   
+         (project_category_item.estimated_hours * project_role.multipler),
+        	project_category_item.actual_hours
+    FROM project_category_item,   
+         project_role,   
+         project_category  
+   WHERE ( project_category_item.role_id = project_role.role_id ) and  
+         ( project_category.category_id = project_category_item.category_id ) and  
+         ( ( project_category_item.project_id = :project_id ) )
 " arguments=(("project_id", number))  sort="group_item A " )
 group(level=1 header.height=1 trailer.height=77 by=("group_item" ) header.color="536870912" trailer.color="536870912"  sort="4444 A " )
 text(band=header alignment="0" text="Project Summary:"border="0" color="0" x="1" y="28" height="65" width="627"  font.face="MS Sans Serif" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )

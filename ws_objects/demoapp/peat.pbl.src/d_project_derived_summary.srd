@@ -10,19 +10,19 @@ table(column=(type=char(50) updatewhereclause=yes name=name dbname="project_deri
  column=(type=decimal(2) updatewhereclause=yes name=percentage dbname="project_derived_item.percentage" )
  column=(type=decimal(2) updatewhereclause=yes name=rate dbname="project_derived_item.rate" )
  column=(type=decimal(4) updatewhereclause=yes name=compute_0004 dbname="compute_0004" )
- retrieve="  SELECT ~"project_derived_item~".~"name~",   
-         ~"project_derived_item~".~"percentage~",   
-         ~"project_derived_item~".~"rate~",   
-            (SELECT sum(~"project_category_item~".~"estimated_hours~"*    
-        					  ~"project_role~".~"multipler~" ) 
-    			FROM ~"project_category_item~",   
-        				~"project_complexity~",   
-        				~"project_role~"  
-  				 WHERE ( ~"project_complexity~".~"complexity_id~" = ~"project_category_item~".~"complexity_id~" ) and  
-       				  ( ~"project_category_item~".~"role_id~" = ~"project_role~".~"role_id~" ) and  
-       				  ( ( ~"project_category_item~".~"project_id~" = :project_id) ))
-      FROM ~"project_derived_item~"
-   WHERE ~"project_derived_item~".~"project_id~" = :project_id  
+ retrieve="  SELECT project_derived_item.name,   
+         project_derived_item.percentage,   
+         project_derived_item.rate,   
+            (SELECT sum(project_category_item.estimated_hours*    
+        					  project_role.multipler ) 
+    			FROM project_category_item,   
+        				project_complexity,   
+        				project_role  
+  				 WHERE ( project_complexity.complexity_id = project_category_item.complexity_id ) and  
+       				  ( project_category_item.role_id = project_role.role_id ) and  
+       				  ( ( project_category_item.project_id = :project_id) ))
+      FROM project_derived_item
+   WHERE project_derived_item.project_id = :project_id  
 " arguments=(("project_id", number)) )
 line(band=header x1="1" y1="144" x2="3479" y2="144" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
 text(band=header alignment="2" text="Percent"border="0" color="0" x="1180" y="68" height="53" width="234"  name=default_derived_item_percentage_t  font.face="MS Sans Serif" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )

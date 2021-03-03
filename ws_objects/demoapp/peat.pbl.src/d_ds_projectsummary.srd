@@ -14,27 +14,25 @@ table(column=(type=char(50) updatewhereclause=yes name=name dbname="project_cate
  column=(type=char(12) updatewhereclause=yes name=picture dbname="compute_0006" )
  column=(type=char(12) updatewhereclause=yes name=state dbname="compute_0007" )
  column=(type=char(12) updatewhereclause=yes name=overlay dbname="compute_0008" )
- retrieve="SELECT ~"project_category~".~"name~",   
-         sum(~"project_category_item~".~"estimated_hours~" * ~"project_role~".~"multipler~"),   
-         sum(~"project_category_item~".~"actual_hours~"),   
-         ~"project_category_item~".~"project_id~",   
-         ~"project_category_item~".~"category_id~",   
+ retrieve="SELECT project_category.name,   
+         sum(project_category_item.estimated_hours * project_role.multipler),   
+         sum(project_category_item.actual_hours),   
+         project_category_item.project_id,   
+         project_category_item.category_id,   
          'peatappl.bmp',   
          'peatappl.bmp',   
          'peatappl.bmp'  
-    FROM ~"project_category_item~",   
-         ~"project_category~",   
-         ~"project_role~"  
-   WHERE ( ~"project_category~".~"category_id~" = ~"project_category_item~".~"category_id~" ) and  
-         ( ~"project_role~".~"role_id~" = ~"project_category_item~".~"role_id~" ) and  
-         ( ( ~"project_category_item~".~"project_id~" = :project_id ) )   
-GROUP BY ~"project_category_item~".~"project_id~",   
-         ~"project_category_item~".~"category_id~",   
-         ~"project_category~".~"name~"    
-
-
+    FROM project_category_item,   
+         project_category,   
+         project_role  
+   WHERE ( project_category.category_id = project_category_item.category_id ) and  
+         ( project_role.role_id = project_category_item.role_id ) and  
+         ( ( project_category_item.project_id = :project_id ) )   
+GROUP BY project_category_item.project_id,   
+         project_category_item.category_id,   
+         project_category.name    
 UNION 
-SELECT ~"project_category~".~"name~",
+SELECT project_category.name,
 			0,
 			0,
 			0,
@@ -42,33 +40,31 @@ SELECT ~"project_category~".~"name~",
 			'peatappl.bmp',
 			'peatappl.bmp',
 			'peatappl.bmp'
-    FROM ~"project_category~"  
-   WHERE (~"project_category~".~"project_id~" = :project_id) and (~"project_category~".~"category_id~" not in 
-		(Select ~"project_category_item~".~"category_id~" from ~"project_category_item~"  
-		 Where ~"project_category~".~"project_id~" = :project_id))
-
+    FROM project_category  
+   WHERE (project_category.project_id = :project_id) and (project_category.category_id not in 
+		(Select project_category_item.category_id from project_category_item  
+		 Where project_category.project_id = :project_id))
 UNION 
 SELECT 'Derived Items',   
-         (SELECT sum(~"project_category_item~".~"estimated_hours~"*    
-        					  ~"project_role~".~"multipler~"   *
-							~"project_derived_item~".~"percentage~" / 100)
-    			FROM ~"project_category_item~",   
-        				~"project_complexity~",
-						~"project_derived_item~",   
-        				~"project_role~",  
-  				 WHERE ( ~"project_complexity~".~"complexity_id~" = ~"project_category_item~".~"complexity_id~" ) and  
-       				  ( ~"project_derived_item~".~"project_id~" = ~"project_role~".~"project_id~" ) and
-						  ( ~"project_category_item~".~"role_id~" = ~"project_role~".~"role_id~" ) and  
-       				  ( ( ~"project_category_item~".~"project_id~" = :project_id) )),   
-         sum(~"project_derived_item~".~"actual_hours~"),   
+         (SELECT sum(project_category_item.estimated_hours*    
+        					  project_role.multipler   *
+							project_derived_item.percentage / 100)
+    			FROM project_category_item,   
+        				project_complexity,
+						project_derived_item,   
+        				project_role
+  				 WHERE ( project_complexity.complexity_id = project_category_item.complexity_id ) and  
+       				  ( project_derived_item.project_id = project_role.project_id ) and
+						  ( project_category_item.role_id = project_role.role_id ) and  
+       				  ( ( project_category_item.project_id = :project_id) )),   
+         sum(project_derived_item.actual_hours),   
          0,   
          0,   
          'peatappl.bmp',   
          'peatappl.bmp',   
          'peatappl.bmp'  
-    FROM ~"project_derived_item~"
-   WHERE ( ~"project_derived_item~".~"project_id~" = :project_id ) 
-
+    FROM project_derived_item
+   WHERE ( project_derived_item.project_id = :project_id ) 
 " update="project_category_item" updatewhere=0 updatekeyinplace=no arguments=(("project_id", number))  sort="name A " )
 text(band=header alignment="2" text="Name"border="0" color="0" x="5" y="4" height="53" width="1166"  name=name_t  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
 text(band=header alignment="2" text="Sum(project Category Item.est"border="0" color="0" x="1175" y="4" height="53" width="645"  name=compute_0002_t  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )

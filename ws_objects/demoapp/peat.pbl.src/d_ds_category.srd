@@ -9,20 +9,18 @@ detail(height=73 color="536870912" )
 table(column=(type=long update=yes updatewhereclause=yes key=yes name=default_category_id dbname="project_category.category_id" )
  column=(type=long update=yes updatewhereclause=yes key=yes name=project_id dbname="project_category.project_id" )
  column=(type=char(50) updatewhereclause=yes name=name dbname="project_category.name" )
- retrieve="   SELECT ~"project_category~".~"category_id~",   
-         ~"project_category~".~"project_id~",   
-         ~"project_category~".~"name~"  
-    FROM ~"project_category~" 
-   WHERE (~"project_category~".~"project_id~" = :project_id)
+ retrieve="   SELECT project_category.category_id,   
+         project_category.project_id,   
+         project_category.name  
+    FROM project_category 
+   WHERE (project_category.project_id = :project_id)
 UNION
   SELECT 0,
-			~"project_derived_item~".~"project_id~",
+			project_derived_item.project_id,
 			'Derived Items'  
-    FROM ~"project_derived_item~" 
-   WHERE ~"project_derived_item~".~"project_id~" = :project_id
-	GROUP BY ~"project_derived_item~".~"project_id~"
-
-
+    FROM project_derived_item 
+   WHERE project_derived_item.project_id = :project_id
+	GROUP BY project_derived_item.project_id
 " update="project_category" updatewhere=0 updatekeyinplace=no arguments=(("project_id", number))  sort="name A " )
 text(band=header alignment="2" text="Category"border="0" color="0" x="5" y="0" height="65" width="513"  name=category_t  font.face="Arial" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
 column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="663" y="4" height="65" width="631" format="[general]"  name=project_id edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )

@@ -13,26 +13,28 @@ table(column=(type=long updatewhereclause=yes identity=yes name=derived_item_id 
  column=(type=decimal(2) updatewhereclause=yes name=percentage dbname="project_derived_item.percentage" )
  column=(type=decimal(4) updatewhereclause=yes name=ca dbname="a" )
  column=(type=decimal(18) updatewhereclause=yes name=compute_0007 dbname="compute_0007" )
- retrieve=" SELECT ~"project_derived_item~".~"derived_item_id~",   
-         ~"project_derived_item~".~"project_id~",   
-         ~"project_derived_item~".~"actual_hours~",   
-         ~"project_derived_item~".~"name~",   
-         ~"project_derived_item~".~"percentage~",
- 			(SELECT sum(~"project_category_item~".~"estimated_hours~"*    
-        					  ~"project_role~".~"multipler~" ) 
-    			FROM ~"project_category_item~",   
-        				~"project_complexity~",   
-        				~"project_role~"  
-  				 WHERE ( ~"project_complexity~".~"complexity_id~" = ~"project_category_item~".~"complexity_id~" ) and  
-       				  ( ~"project_category_item~".~"role_id~" = ~"project_role~".~"role_id~" ) and  
-       				  ( ( ~"project_category_item~".~"project_id~" = :project_id) )) a,
-			(~"project_derived_item~".~"actual_hours~" / a)
-    FROM ~"project_derived_item~"  
-   WHERE (~"project_derived_item~".~"project_id~" = :project_id ) and
-			((~"project_derived_item~".~"actual_hours~" >= 
-			((~"project_derived_item~".~"percentage~" / 100) * a) * (1 + :deviation)) or
-				(~"project_derived_item~".~"actual_hours~" <= 
-			((~"project_derived_item~".~"percentage~" / 100) * a) * (1 - :deviation)))" arguments=(("project_id", number),("deviation", number)) )
+ retrieve=" WITH x AS (SELECT sum(project_category_item.estimated_hours *    
+        					  project_role.multipler ) as est_hours
+    			FROM project_category_item,   
+        				project_complexity,   
+        				project_role  
+  				 WHERE ( project_complexity.complexity_id = project_category_item.complexity_id ) and  
+       				  ( project_category_item.role_id = project_role.role_id ) and  
+       				  ( ( project_category_item.project_id = :project_id) ))  
+ SELECT project_derived_item.derived_item_id,   
+         project_derived_item.project_id,   
+         project_derived_item.actual_hours,   
+         project_derived_item.name,   
+         project_derived_item.percentage,
+ 		x.est_hours,
+ 	    (project_derived_item.actual_hours / x.est_hours)
+    FROM project_derived_item,
+	         x
+   WHERE (project_derived_item.project_id = :project_id ) and
+			((project_derived_item.actual_hours >= 
+			((project_derived_item.percentage / 100) * x.est_hours) * (1 + :deviation)) or
+				(project_derived_item.actual_hours <= 
+			((project_derived_item.percentage / 100) * x.est_hours) * (1 - :deviation)))" arguments=(("project_id", number),("deviation", number)) )
 compute(band=header alignment="0" expression="~"Derived Items Exceeding (+/-) ~" +  (deviation * 100) + ~"% ~""border="0" color="0" x="1" y="64" height="53" width="1134" format="[general]"  font.face="MS Sans Serif" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
 line(band=header x1="5" y1="240" x2="3009" y2="240" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
 text(band=header alignment="2" text="Name"border="0" color="0" x="147" y="160" height="53" width="165"  name=name_t  font.face="MS Sans Serif" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )

@@ -20,24 +20,24 @@ table(column=(type=long update=yes updatewhereclause=yes key=yes identity=yes na
  column=(type=decimal(4) updatewhereclause=yes name=estimated_hours dbname="compute_0012" )
  column=(type=decimal(6) updatewhereclause=yes name=estimated_cost dbname="compute_0013" )
  column=(type=decimal(4) updatewhereclause=yes name=actual_cost dbname="compute_0014" )
- retrieve="  SELECT  ~"project_category_item~".~"category_item_id~" ,           
-~"project_category_item~".~"project_id~" ,           
-~"project_category_item~".~"category_id~" ,           
-~"project_category_item~".~"complexity_id~" ,           
-~"project_category_item~".~"role_id~" ,           
-~"project_category_item~".~"name~" ,           
-~"project_category_item~".~"estimated_hours~" ,           
-~"project_category_item~".~"actual_hours~" ,           
-~"project_role~".~"name~" ,           
-~"project_role~".~"rate~" ,           
-~"project_role~".~"multipler~" ,           
-~"project_category_item~".~"estimated_hours~" * ~"project_role~".~"multipler~",           
-~"project_category_item~".~"estimated_hours~" * ~"project_role~".~"rate~" * ~"project_role~".~"multipler~",           
-~"project_category_item~".~"actual_hours~" * ~"project_role~".~"rate~"    
-        FROM ~"project_category_item~" ,           ~"project_role~"     
-        WHERE ( ~"project_role~".~"role_id~" = ~"project_category_item~".~"role_id~" ) and          
-( ( ~"project_category_item~".~"project_id~" = :project_id ) and          
-( ~"project_category_item~".~"category_id~" = :category_id ) )  " update="project_category_item" updatewhere=0 updatekeyinplace=no arguments=(("project_id", number),("category_id", number))  sort="name A " )
+ retrieve="  SELECT  project_category_item.category_item_id ,           
+project_category_item.project_id ,           
+project_category_item.category_id ,           
+project_category_item.complexity_id ,           
+project_category_item.role_id ,           
+project_category_item.name ,           
+project_category_item.estimated_hours ,           
+project_category_item.actual_hours ,           
+project_role.name ,           
+project_role.rate ,           
+project_role.multipler ,           
+project_category_item.estimated_hours * project_role.multipler,           
+project_category_item.estimated_hours * project_role.rate * project_role.multipler,           
+project_category_item.actual_hours * project_role.rate    
+        FROM project_category_item ,           project_role     
+        WHERE ( project_role.role_id = project_category_item.role_id ) and          
+( ( project_category_item.project_id = :project_id ) and          
+( project_category_item.category_id = :category_id ) )  " update="project_category_item" updatewhere=0 updatekeyinplace=no arguments=(("project_id", number),("category_id", number))  sort="name A " )
 column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="10" y="4" height="65" width="700" format="[general]"  name=name edit.limit=0 edit.case=any edit.autoselect=yes  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
 column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="1555" y="4" height="53" width="211" format="#,##0.00"  name=actual_hours edit.limit=0 edit.case=any edit.autoselect=yes  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
 column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="1793" y="8" height="53" width="348" format="$#,##0.00;[RED]($#,##0.00)"  name=estimated_cost edit.limit=0 edit.case=any edit.autoselect=yes  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )

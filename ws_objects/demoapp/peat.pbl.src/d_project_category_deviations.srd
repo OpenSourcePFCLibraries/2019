@@ -14,29 +14,29 @@ table(column=(type=char(50) updatewhereclause=yes name=name dbname="project_cate
  column=(type=decimal(4) updatewhereclause=yes name=compute_0006 dbname="compute_0006" )
  column=(type=decimal(2) updatewhereclause=yes name=actual_hours dbname="project_category_item.actual_hours" )
  column=(type=char(50) updatewhereclause=yes name=project_category_name dbname="project_category.name" )
- retrieve="  SELECT ~"project_category_item~".~"name~",   
-         ~"project_role~".~"name~",
-			~"project_complexity~".~"name~", 
-         ~"project_category_item~".~"category_id~",   
-         ~"project_category_item~".~"estimated_hours~", 
-			~"project_category_item~".~"estimated_hours~" * ~"project_role~".~"multipler~",  
-         ~"project_category_item~".~"actual_hours~",
-			~"project_category~".~"name~"  
-    FROM ~"project_category_item~",   
-         ~"project_role~",
-			~"project_complexity~",
-			~"project_category~"  
-	WHERE ( ~"project_category~".~"category_id~" = ~"project_category_item~".~"category_id~" ) and  
-         ( ~"project_category~".~"project_id~" = ~"project_category_item~".~"project_id~" ) and 
-			( ~"project_complexity~".~"complexity_id~" = ~"project_category_item~".~"complexity_id~" ) and  
-         ( ~"project_complexity~".~"project_id~" = ~"project_category_item~".~"project_id~" ) and 
-			( ~"project_role~".~"role_id~" = ~"project_category_item~".~"role_id~" ) and  
-         ( ~"project_role~".~"project_id~" = ~"project_category_item~".~"project_id~" ) and 
-			(~"project_category_item~".~"project_id~" = :project_id) and
-			((~"project_category_item~".~"actual_hours~" <= 
-				~"project_category_item~".~"estimated_hours~" * ~"project_role~".~"multipler~" * (1 - :deviation)) or
-			(~"project_category_item~".~"actual_hours~" >= 
-			 ~"project_category_item~".~"estimated_hours~" * ~"project_role~".~"multipler~" * (1 + :deviation)))
+ retrieve="  SELECT project_category_item.name,   
+         project_role.name,
+			project_complexity.name, 
+         project_category_item.category_id,   
+         project_category_item.estimated_hours, 
+			project_category_item.estimated_hours * project_role.multipler,  
+         project_category_item.actual_hours,
+			project_category.name  
+    FROM project_category_item,   
+         project_role,
+			project_complexity,
+			project_category  
+	WHERE ( project_category.category_id = project_category_item.category_id ) and  
+         ( project_category.project_id = project_category_item.project_id ) and 
+			( project_complexity.complexity_id = project_category_item.complexity_id ) and  
+         ( project_complexity.project_id = project_category_item.project_id ) and 
+			( project_role.role_id = project_category_item.role_id ) and  
+         ( project_role.project_id = project_category_item.project_id ) and 
+			(project_category_item.project_id = :project_id) and
+			((project_category_item.actual_hours <= 
+				project_category_item.estimated_hours * project_role.multipler * (1 - :deviation)) or
+			(project_category_item.actual_hours >= 
+			 project_category_item.estimated_hours * project_role.multipler * (1 + :deviation)))
 " arguments=(("project_id", number),("deviation", number))  sort="project_category_name A " )
 group(level=1 header.height=97 trailer.height=1 by=("category_id" ) header.color="536870912" trailer.color="536870912" )
 line(band=header x1="5" y1="240" x2="3009" y2="240" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
