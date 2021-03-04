@@ -17,9 +17,9 @@ table(column=(type=long update=yes updatewhereclause=yes key=yes identity=yes na
  column=(type=char(50) updatewhereclause=yes name=role_name dbname="project_role.name" )
  column=(type=decimal(2) updatewhereclause=yes name=role_rate dbname="project_role.rate" validation=" real(gettext())  > 0" validationmsg="'Rate must be greater than zero.'" )
  column=(type=decimal(2) updatewhereclause=yes name=role_multiplier dbname="project_role.multipler" )
- column=(type=decimal(4) updatewhereclause=yes name=estimated_hours dbname="compute_0012" )
- column=(type=decimal(6) updatewhereclause=yes name=estimated_cost dbname="compute_0013" )
- column=(type=decimal(4) updatewhereclause=yes name=actual_cost dbname="compute_0014" )
+ column=(type=decimal(4) updatewhereclause=yes name=estimated_hours dbname="estimated_hours" )
+ column=(type=decimal(6) updatewhereclause=yes name=estimated_cost dbname="estimated_cost" )
+ column=(type=decimal(4) updatewhereclause=yes name=actual_cost dbname="actual_cost" )
  retrieve="  SELECT  project_category_item.category_item_id ,           
 project_category_item.project_id ,           
 project_category_item.category_id ,           
@@ -31,9 +31,9 @@ project_category_item.actual_hours ,
 project_role.name ,           
 project_role.rate ,           
 project_role.multipler ,           
-project_category_item.estimated_hours * project_role.multipler,           
-project_category_item.estimated_hours * project_role.rate * project_role.multipler,           
-project_category_item.actual_hours * project_role.rate    
+project_category_item.estimated_hours * project_role.multipler as estimated_hours,           
+project_category_item.estimated_hours * project_role.rate * project_role.multipler as estimated_cost,           
+project_category_item.actual_hours * project_role.rate as actual_cost    
         FROM project_category_item ,           project_role     
         WHERE ( project_role.role_id = project_category_item.role_id ) and          
 ( ( project_category_item.project_id = :project_id ) and          
