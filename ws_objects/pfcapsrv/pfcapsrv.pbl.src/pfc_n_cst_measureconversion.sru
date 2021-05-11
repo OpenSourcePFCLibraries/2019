@@ -5,9 +5,8 @@ global type pfc_n_cst_measureconversion from n_base
 end type
 end forward
 
-global type pfc_n_cst_measureconversion from n_base
+global type pfc_n_cst_measureconversion from n_base autoinstantiate
 end type
-global pfc_n_cst_measureconversion pfc_n_cst_measureconversion
 
 type variables
 

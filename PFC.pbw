@@ -9,5 +9,5 @@ Save Format v3.0(19990112)
  4 "security\\pfcsecsc\\security scanner.pbt";
  5 "examples\\appexamp\\pfc examples.pbt";
 @end;
-DefaultTarget "examples\\appexamp\\pfc examples.pbt";
-DefaultRemoteTarget "examples\\appexamp\\pfc examples.pbt";
+DefaultTarget "pfcapp\\generic_pfc_app.pbt";
+DefaultRemoteTarget "pfcapp\\generic_pfc_app.pbt";
