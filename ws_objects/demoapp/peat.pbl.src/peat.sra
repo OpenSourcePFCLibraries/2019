@@ -14,7 +14,8 @@ n_cst_peat	 gnv_app
 end variables
 
 global type peat from application
- end type
+ string appruntimeversion = "19.2.0.2703"
+end type
 global peat peat
 
 on peat.create

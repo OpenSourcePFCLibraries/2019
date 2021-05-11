@@ -14,7 +14,8 @@ n_pfcsecurity_appmanager gnv_app
 end variables
 
 global type pfcsecurity_admin from application
- end type
+ string appruntimeversion = "19.2.0.2703"
+end type
 global pfcsecurity_admin pfcsecurity_admin
 
 on pfcsecurity_admin.create

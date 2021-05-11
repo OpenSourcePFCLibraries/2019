@@ -17,6 +17,7 @@ end variables
 
 global type pfcsecurity_scanner from application
 string appname = "pfcsecurity_scanner"
+string appruntimeversion = "19.2.0.2703"
 end type
 global pfcsecurity_scanner pfcsecurity_scanner
 
