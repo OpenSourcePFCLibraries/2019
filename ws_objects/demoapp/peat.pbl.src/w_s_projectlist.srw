@@ -320,9 +320,6 @@ end event
 
 event open;call super::open;this.of_setExplorer(TRUE)
 inv_Explorer.of_setControls(tv_project_list, lv_project_info)
-
-
-
 end event
 
 event resize;call w_sheet::resize;IF IsValid(inv_explorer) THEN

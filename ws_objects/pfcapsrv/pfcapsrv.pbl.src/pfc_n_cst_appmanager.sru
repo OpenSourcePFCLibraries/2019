@@ -45,7 +45,6 @@ string	is_userid
 string	is_copyright
 w_frame	iw_frame
 end variables
-
 forward prototypes
 public function string of_getuserid ()
 public function boolean of_isregistryavailable ()

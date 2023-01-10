@@ -9,6 +9,5 @@ Save Format v3.0(19990112)
  4 "security\\pfcsecsc\\security scanner.pbt";
  5 "examples\\appexamp\\pfc examples.pbt";
 @end;
-DefaultTarget "demoapp\\peat demo app.pbt";
-DefaultExportEncode "UTF-8";
-DefaultRemoteTarget "demoapp\\peat demo app.pbt";
+DefaultTarget "examples\\appexamp\\pfc examples.pbt";
+DefaultRemoteTarget "examples\\appexamp\\pfc examples.pbt";

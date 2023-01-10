@@ -250,7 +250,7 @@ ElseIf li_rc <= 0 Then
 	If ii_logonattempts > 0 Then
 		// There are still have more attempts for a succesful login.
 		of_MessageBox ("pfc_logon_incorrectpassword", "Login", &
-			"The username/password combination is incorrect.", StopSign!, Ok!, 1)
+			"The password is incorrect.", StopSign!, Ok!, 1)
 		sle_password.SetFocus()
 		Return
 	Else
@@ -404,6 +404,7 @@ type sle_userid from u_sle within pfc_w_logon
 integer x = 681
 integer y = 200
 integer width = 1088
+integer height = 76
 integer taborder = 10
 boolean autohscroll = true
 end type
@@ -415,6 +416,7 @@ type sle_password from u_sle within pfc_w_logon
 integer x = 681
 integer y = 304
 integer width = 1088
+integer height = 76
 integer taborder = 20
 boolean autohscroll = true
 boolean password = true

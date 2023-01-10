@@ -13,7 +13,6 @@ type variables
 Protected:
 boolean		ib_IsObsolete
 end variables
-
 forward prototypes
 protected function integer of_messagebox (string as_id, string as_title, string as_text, icon ae_icon, button ae_button, integer ai_default)
 end prototypes
