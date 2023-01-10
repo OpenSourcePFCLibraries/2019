@@ -18,9 +18,6 @@ boolean toolbarvisible = false
 end type
 global w_f_peat w_f_peat
 
-event open;call super::open;this.Event pfc_open()
-end event
-
 on w_f_peat.create
 call super::create
 if IsValid(this.MenuID) then destroy(this.MenuID)
@@ -48,6 +45,60 @@ END IF
 
 end event
 
-event pfc_postopen;call super::pfc_postopen;OpenSheet(w_s_projectlist, this, 0, layered!)
+event pfc_postopen;call super::pfc_postopen;integer 	li_return
+String		ls_inifile
+String		ls_authentication
+
+// Connect to database
+ls_inifile = gnv_app.of_GetAppIniFile()
+IF SQLCA.of_Init(ls_inifile, "Database") = -1 THEN
+	gnv_app.inv_error.of_message(gnv_app.iapp_object.DisplayName, + &
+			"Error initializing connection information, .INI file not found.")
+	Halt Close		
+	Return
+ELSE
+	IF IsPowerServerApp() THEN
+		gnv_app.is_authentication = ProfileString(ls_inifile,"Application","Authentication","Database")
+		IF gnv_app.is_authentication = gnv_app.OPENID THEN
+			// No need for login dialog, call open id auth directory
+			li_return = gnv_app.of_openid_authentication()
+			IF li_return = -1 THEN 
+				Halt Close
+				Return
+			END IF
+		ELSE
+			//Call the function to open the login dialog
+			li_return = gnv_app.of_LogonDlg()
+			If li_return <> 1 Then
+				Halt Close
+				Return
+			END IF
+		END IF
+	ELSE
+		//Call the function to open the login dialog
+		li_return = gnv_app.of_LogonDlg()
+		IF li_return <> 1 THEN
+			Halt Close
+			Return
+		END IF
+	END IF
+END IF
+
+end event
+
+event pfc_open;call super::pfc_open;long		ll_project_id
+string		ls_project_name
+
+gnv_app.inv_error.of_SetPredefinedSource(SQLCA)
+
+SELECT project_id,
+		   name
+INTO :ll_project_id,
+		:ls_project_name
+FROM project
+WHERE project_id  = 1 ;
+
+OpenSheet(w_s_projectlist, this, 0, layered!)
+
 end event
 

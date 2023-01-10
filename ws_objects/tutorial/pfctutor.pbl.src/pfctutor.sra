@@ -14,7 +14,8 @@ n_cst_appmanager   gnv_app
 end variables
 
 global type pfctutor from application
- end type
+ string appruntimeversion = "22.0.0.1845"
+end type
 global pfctutor pfctutor
 
 on pfctutor.create

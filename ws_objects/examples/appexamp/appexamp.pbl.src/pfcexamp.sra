@@ -12,7 +12,8 @@ n_ExampleAppManager gnv_app
 end variables
 
 global type pfcexamp from application
- end type
+ string appruntimeversion = "22.0.0.1845"
+end type
 global pfcexamp pfcexamp
 
 on pfcexamp.create
