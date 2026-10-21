@@ -311,9 +311,9 @@ cb_userinput.X = mle_message.X + mle_message.Width + SEPARATOR
 // Set the width of the window according to the size of
 // the Message and the RightSide buttons.
 If (cb_print.Visible=False And cb_userinput.Visible=False) Then
-	This.Width = mle_message.X + mle_message.Width + SEPARATOR + 30
+	This.Width = mle_message.X + mle_message.Width + SEPARATOR + 60
 Else
-	This.Width = mle_message.X + mle_message.Width + cb_print.Width + (SEPARATOR *2) + 30
+	This.Width = mle_message.X + mle_message.Width + cb_print.Width + (SEPARATOR *2) + 60
 End If
 
 // Move the BottomSide Buttons right under the Message.
@@ -353,7 +353,7 @@ mle_userinput.Width = mle_message.Width
 mle_userinput.Visible = False
 
 // Adjust the Height of the window to hide the User Input space.
-This.Height = cb_1.Y + cb_1.Height + 100 + SEPARATOR
+This.Height = cb_1.Y + cb_1.Height + 100 + SEPARATOR + 40
 
 // Center the window on the Parent window.
 lw_parent = ParentWindow()

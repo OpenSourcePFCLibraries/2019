@@ -651,7 +651,7 @@ event clicked;call super::clicked;//////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
-showHelp ("pfcdlg.hlp", topic!, 10500)
+showHelp ("pfcdlg.chm", topic!, 10500)
 end event
 
 type cb_close from u_cb within pfc_w_sqlspy

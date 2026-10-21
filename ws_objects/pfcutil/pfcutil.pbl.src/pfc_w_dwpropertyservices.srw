@@ -372,7 +372,7 @@ event clicked;call super::clicked;//////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
-showHelp ("pfcdlg.hlp", topic!, 10400)
+showHelp ("pfcdlg.chm", topic!, 10400)
 end event
 
 type cb_cancel from u_cb within pfc_w_dwpropertyservices

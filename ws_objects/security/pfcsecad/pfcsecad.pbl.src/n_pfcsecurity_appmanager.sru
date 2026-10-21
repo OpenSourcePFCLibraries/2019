@@ -36,7 +36,7 @@ of_SetVersion ("Version " + String ( li_major ) + "." + String ( li_minor ) + ".
 of_SetLogo ("key.bmp")
 
 // The application bitmap name
-of_SetHelpFile ( "pbpfc" + String ( li_major ) + String ( li_minor ) + ".hlp")
+of_SetHelpFile ( "pbpfc110.chm")
 
 
 // The application's copyright message

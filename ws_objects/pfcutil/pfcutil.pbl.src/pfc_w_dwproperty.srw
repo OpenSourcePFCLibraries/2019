@@ -293,6 +293,6 @@ int	li_helpindex
 // Determine help index based on selected tab
 li_helpindex = (tab_property.selectedTab * 100) + 10000
 
-showHelp ("pfcdlg.hlp", topic!, li_helpindex)
+showHelp ("pfcdlg.chm", topic!, li_helpindex)
 end event
 
