@@ -57,7 +57,7 @@ of_SetUserKey ( "HKEY_CURRENT_USER\Software\Appeon\PowerBuilder\" + &
 	String ( li_major ) + "." + String ( li_minor ) + "\PFC Examples" )
 	
 // The file name of the application's online help file
-of_SetHelpFile ( "pfcexamp.hlp" )
+of_SetHelpFile ( "pfcexamp.chm" )
 
 // The application version
 of_SetVersion ( "Version " + String ( li_major ) + "." + String ( li_minor ) + ".00" )

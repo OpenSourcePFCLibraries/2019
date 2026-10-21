@@ -886,7 +886,7 @@ event clicked;call super::clicked;//////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
-showHelp ("pfcdlg.hlp", topic!, 500)
+showHelp ("pfcdlg.chm", topic!, 500)
 end event
 
 type gb_margins from u_gb within pfc_w_pagesetup

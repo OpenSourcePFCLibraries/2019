@@ -1157,7 +1157,7 @@ CHOOSE CASE ai_style
 			if isValid (idw_requestor) then
 				if len (idw_requestor.dataobject) > 0 then
 					idw_requestor.object.datawindow.help.command = 1
-					idw_requestor.object.datawindow.help.file = "pfcdlg.hlp"
+					idw_requestor.object.datawindow.help.file = "pfcdlg.chm"
 					idw_requestor.object.datawindow.help.typeid.setsort = "1200"
 					idw_requestor.object.datawindow.help.typeid.setsortexpr = "800"
 				end if
