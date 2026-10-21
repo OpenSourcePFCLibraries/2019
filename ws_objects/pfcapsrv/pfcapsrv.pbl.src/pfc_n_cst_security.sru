@@ -76,6 +76,9 @@ protected function integer of_addobject (string as_app, string as_winname, strin
 protected function integer of_setcontrolstatus (graphicobject ago_item, string as_window, string as_object)
 protected function integer of_setcontrolstatus (graphicobject ago_item, string as_window, string as_object, string as_itemname)
 public function string of_gettype (windowobject a_object, ref string as_desc)
+protected function string of_getsystemtype (powerobject apo_object)
+protected function boolean of_isa (powerobject apo_object, string as_systemtype)
+protected function integer of_setcontrolstatus_generic (graphicobject ago_item, string as_window, string as_itemname)
 end prototypes
 
 protected function integer of_setmenustatus (ref menu am_item, string as_window, boolean ab_override);//////////////////////////////////////////////////////////////////////////////
@@ -1235,6 +1238,8 @@ If (as_control = '') or (as_object = '') Then Return '!'
 
 // remember what we were looking at before
 ls_origfilter = ids_items.Describe("DataWindow.Table.Filter")
+// Describe returns "?" when there is no filter
+If ls_origfilter = "?" Then ls_origfilter = ""
 
 is_currfilter = "window=~""+as_object+"~" AND control=~""+as_control+"~""
 IF ids_items.SetFilter(is_currfilter) <> 1 then return '!'
@@ -1804,8 +1809,11 @@ protected function integer of_setcontrolstatus (graphicobject ago_item, string a
 //	5.0   Initial version
 //	5.0.03 Added support for drawobjects. These only have a visible attribute
 //	6.0 Added new parameter (as_itemname) to support standalone objects
-// 7.0 Added support for new controls: vprogressbar, vtrackbar, hprogressbar, 
+// 7.0 Added support for new controls: vprogressbar, vtrackbar, hprogressbar,
 //		 htrackbar, picturehyperlink, statictexthyperlink
+//	2019	Added support for animation, datepicker, inkedit, inkpicture, monthcalendar,
+//			webbrowser and ribbonbar.  Unknown control types are handled by
+//			of_SetControlStatus_Generic instead of halting
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1873,7 +1881,13 @@ hprogressbar	l_hpb
 htrackbar		l_htb
 picturehyperlink l_phl
 statichyperlink l_sth
-			
+animation		l_an
+datepicker		l_dp
+inkedit			l_ie
+inkpicture		l_ip
+monthcalendar	l_mc
+webbrowser		l_wb
+
 If as_itemname = '' Then
 	If as_object = '' Then
 		ls_itemname = lower(classname(ago_item))
@@ -1906,6 +1920,8 @@ Choose Case typeof(ago_item)
 		li_numset = of_SetState(as_window, ls_itemname, l_dw.enabled, l_dw.visible)
 		ls_datawindow = trim(ls_itemname)
 		ls_orig_filter = ids_items.Describe("DataWindow.Table.Filter")
+		// Describe returns "?" when there is no filter
+		If ls_orig_filter = "?" Then ls_orig_filter = ""
 		// this filter will keep any columns that have a datawindow reference in it
 		is_currfilter = "window=~""+as_window+"~" AND pos(control, ~""+ls_datawindow+"~")"
 		IF ids_items.SetFilter("window=~""+as_window+"~" AND pos(control, ~""+ls_datawindow+"~") > 0") <> 1 then return -1
@@ -2022,13 +2038,32 @@ Choose Case typeof(ago_item)
 	Case statichyperlink!
 		l_sth = ago_item
 		li_numset = of_SetState(as_window, ls_itemname, l_sth.enabled, l_sth.visible)
-		
-	Case Else 
-		// Big time error here.
-		of_Messagebox('pfc_securitystatuserror', 'of_setcontrolstatus', &
-					'Unknown control '+ls_itemname+'. Please contact your system administrator.', &
-					stopsign!, OK!, 1)
-		Halt Close
+	Case animation!
+		l_an = ago_item
+		li_numset = of_SetState(as_window, ls_itemname, l_an.enabled, l_an.visible)
+	Case datepicker!
+		l_dp = ago_item
+		li_numset = of_SetState(as_window, ls_itemname, l_dp.enabled, l_dp.visible)
+	Case inkedit!
+		l_ie = ago_item
+		li_numset = of_SetState(as_window, ls_itemname, l_ie.enabled, l_ie.visible)
+	Case inkpicture!
+		l_ip = ago_item
+		li_numset = of_SetState(as_window, ls_itemname, l_ip.enabled, l_ip.visible)
+	Case monthcalendar!
+		l_mc = ago_item
+		li_numset = of_SetState(as_window, ls_itemname, l_mc.enabled, l_mc.visible)
+	Case webbrowser!
+		l_wb = ago_item
+		li_numset = of_SetState(as_window, ls_itemname, l_wb.enabled, l_wb.visible)
+	Case ribbonbar!
+		// The ribbon bar itself is not secured
+		li_numset = 0
+
+	Case Else
+		// A control type this function does not list (for example one added in a later
+		// PowerBuilder release): secure it through what all controls have
+		li_numset = of_SetControlStatus_Generic(ago_item, as_window, ls_itemname)
 
 End Choose
 
@@ -2059,6 +2094,9 @@ public function string of_gettype (windowobject a_object, ref string as_desc);//
 //	5.0   Initial version
 // 6.0 	Marked obsolete
 //	12.5	Added Metaclass Service Obsolete Tag
+//	2019	Added animation, datepicker, inkedit, inkpicture, monthcalendar, webbrowser,
+//			ribbonbar, the progress bars, trackbars and hyperlinks.  Unlisted types are
+//			reported by their PowerBuilder type name
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -2084,8 +2122,9 @@ public function string of_gettype (windowobject a_object, ref string as_desc);//
 //
 //////////////////////////////////////////////////////////////////////////////
 
+string	ls_type
 
-choose case typeof(a_object) 
+choose case typeof(a_object)
 	case commandbutton!
 		commandbutton l_cb
 		l_cb = a_object
@@ -2228,12 +2267,274 @@ choose case typeof(a_object)
 	case Roundrectangle!
 		as_desc = of_GetTag(a_object.tag)
 		return 'RoundRectangle'
+	case hprogressbar!
+		as_desc = of_GetTag(a_object.tag)
+		return 'HProgressBar'
+	case vprogressbar!
+		as_desc = of_GetTag(a_object.tag)
+		return 'VProgressBar'
+	case htrackbar!
+		as_desc = of_GetTag(a_object.tag)
+		return 'HTrackBar'
+	case vtrackbar!
+		as_desc = of_GetTag(a_object.tag)
+		return 'VTrackBar'
+	case picturehyperlink!
+		as_desc = of_GetTag(a_object.tag)
+		return 'PictureHyperLink'
+	case statichyperlink!
+		statichyperlink l_sth
+		l_sth = a_object
+		as_desc = l_sth.text
+		if as_desc = '' then as_desc = of_GetTag(l_sth.tag)
+		return 'StaticHyperLink'
+	case animation!
+		as_desc = of_GetTag(a_object.tag)
+		return 'Animation'
+	case datepicker!
+		datepicker l_dp
+		l_dp = a_object
+		as_desc = l_dp.text
+		if as_desc = '' then as_desc = of_GetTag(l_dp.tag)
+		return 'DatePicker'
+	case inkedit!
+		inkedit l_ie
+		l_ie = a_object
+		as_desc = l_ie.text
+		if as_desc = '' then as_desc = of_GetTag(l_ie.tag)
+		return 'InkEdit'
+	case inkpicture!
+		as_desc = of_GetTag(a_object.tag)
+		return 'InkPicture'
+	case monthcalendar!
+		as_desc = of_GetTag(a_object.tag)
+		return 'MonthCalendar'
+	case webbrowser!
+		as_desc = of_GetTag(a_object.tag)
+		return 'WebBrowser'
+	case ribbonbar!
+		as_desc = of_GetTag(a_object.tag)
+		return 'RibbonBar'
 	case else
-		as_desc = 'Unknown: ' + classname(a_object)
-		return 'Unknown'
+		// A control type not listed here: report its PowerBuilder type name
+		as_desc = of_GetTag(a_object.tag)
+		ls_type = of_GetSystemType(a_object)
+		If Len(ls_type) = 0 Then Return 'Unknown'
+		return Upper(Left(ls_type, 1)) + Mid(ls_type, 2)
 end choose
 
 
+end function
+
+protected function string of_getsystemtype (powerobject apo_object);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_GetSystemType
+//
+//	Access:  protected
+//
+//	Arguments:
+//	apo_object	object to check
+//
+//	Returns:  String
+//	The lower-case name of the PowerBuilder system type the object is or inherits from
+//	(for example "commandbutton" for a u_cb), or "" if it cannot be determined.
+//
+//	Description:  Identifies control types by name, so that control types this service
+//		does not list can still be recognized and reported.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2019	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+ClassDefinition	lcd_class
+
+If IsNull(apo_object) Or Not IsValid(apo_object) Then Return ""
+
+lcd_class = apo_object.ClassDefinition
+Do While IsValid(lcd_class)
+	If lcd_class.IsSystemType Then Return Lower(lcd_class.Name)
+	lcd_class = lcd_class.Ancestor
+Loop
+
+Return ""
+end function
+
+protected function boolean of_isa (powerobject apo_object, string as_systemtype);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_IsA
+//
+//	Access:  protected
+//
+//	Arguments:
+//	apo_object		object to check
+//	as_systemtype	name of a PowerBuilder system type, for example "dragobject"
+//
+//	Returns:  Boolean.  True if the object is of that type or inherits from it
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2019	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+ClassDefinition	lcd_class
+
+If IsNull(apo_object) Or Not IsValid(apo_object) Then Return False
+
+as_systemtype = Lower(as_systemtype)
+lcd_class = apo_object.ClassDefinition
+Do While IsValid(lcd_class)
+	If lcd_class.IsSystemType Then
+		If Lower(lcd_class.Name) = as_systemtype Then Return True
+	End If
+	lcd_class = lcd_class.Ancestor
+Loop
+
+Return False
+end function
+
+protected function integer of_setcontrolstatus_generic (graphicobject ago_item, string as_window, string as_itemname);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_SetControlStatus_Generic
+//
+//	Access:  protected
+//
+//	Arguments:
+//	ago_item		control to be set
+//	as_window	name of window that the control is on
+//	as_itemname	name of the control in the security tables
+//
+//	Returns:  Integer
+//				The number of controls set
+//				 0 = Nothing was set
+//
+//	Description:  Sets the status of a control whose type of_SetControlStatus does not list,
+//		for example a control type added in a later PowerBuilder release.  Only the Visible
+//		attribute is common to all controls, so 'E' shows the control, 'I' hides it, and 'D'
+//		also hides it, because the control cannot be disabled without knowing its type.
+//		When the debug service is on, the control is reported in its log.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2019	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+integer		li_numset
+boolean		lb_enabled = True, lb_visible
+string		ls_type
+DragObject	ldo_item
+DrawObject	ldwo_item
+
+ls_type = of_GetSystemType(ago_item)
+
+If IsValid(gnv_app) Then
+	If IsValid(gnv_app.inv_debug) Then
+		gnv_app.inv_debug.of_Message("PFC security service: " + as_window + "." + as_itemname + &
+			" is a " + ls_type + " control, which the security service secures through its Visible attribute only.")
+	End If
+End If
+
+If of_IsA(ago_item, "dragobject") Then
+	ldo_item = ago_item
+	lb_visible = ldo_item.Visible
+ElseIf of_IsA(ago_item, "drawobject") Then
+	ldwo_item = ago_item
+	lb_visible = ldwo_item.Visible
+Else
+	// Not a control that can be shown or hidden
+	Return 0
+End If
+
+// of_SetState clears lb_enabled for 'D' and 'I'
+li_numset = of_SetState(as_window, as_itemname, lb_enabled, lb_visible)
+If li_numset > 0 Then
+	If Not lb_enabled Then lb_visible = False
+	If IsValid(ldo_item) Then
+		ldo_item.Visible = lb_visible
+	Else
+		ldwo_item.Visible = lb_visible
+	End If
+End If
+
+Return li_numset
 end function
 
 on pfc_n_cst_security.create
