@@ -2288,7 +2288,7 @@ Choose Case ae_accessiblerole
 		Return "linkrole"
 		
 	Case listrole!
-		Return "listrole	"
+		Return "listrole"
 	
 	Case menubarrole!
 		Return "menubarrole"
@@ -5544,10 +5544,7 @@ Choose Case ae_errorreturn
 		Return "eventwrongprototypeerror"
 
 	Case featurenotsupportederror!
-		Return "borderrole"
-
-	Case featurenotsupportederror!
-		Return "buttondropdowngridrole"
+		Return "featurenotsupportederror"
 
 	Case filealreadyopenerror!
 		Return "filealreadyopenerror"
@@ -18953,6 +18950,9 @@ Choose Case as_source
 	Case "xslfop"
 		ae_pdfmethod = xslfop!
 
+	Case "nativepdf"
+		ae_pdfmethod = nativepdf!
+
 	Case Else
 		// Wrong Parameter Value
 		return -1
@@ -19024,6 +19024,9 @@ Choose Case ae_pdfmethod
 
 	Case xslfop!
 		Return "xslfop"
+
+	Case nativepdf!
+		Return "nativepdf"
 		
 End Choose
 
