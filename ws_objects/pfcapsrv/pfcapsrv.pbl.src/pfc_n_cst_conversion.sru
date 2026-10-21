@@ -16122,8 +16122,14 @@ Choose Case as_source
 	Case "classdefinitionobject"
 		ae_object = classdefinitionobject! 
 	
+	Case "coderobject"
+		ae_object = coderobject! 
+	
 	Case "commandbutton"
 		ae_object = commandbutton! 
+	
+	Case "compressorobject"
+		ae_object = compressorobject! 
 	
 	Case "connection"
 		ae_object = connection! 
@@ -16151,6 +16157,9 @@ Choose Case as_source
 	
 	Case "cplusplus"
 		ae_object = cplusplus! 
+	
+	Case "crypterobject"
+		ae_object = crypterobject! 
 	
 	Case "datastore"
 		ae_object = datastore! 
@@ -16218,6 +16227,9 @@ Choose Case as_source
 	Case "extobject"
 		ae_object = extobject! 
 	
+	Case "extractorobject"
+		ae_object = extractorobject! 
+	
 	Case "functionobject"
 		ae_object = functionobject! 
 	
@@ -16245,6 +16257,9 @@ Choose Case as_source
 	Case "htrackbar"
 		ae_object = htrackbar! 
 	
+	Case "httpclient"
+		ae_object = httpclient! 
+	
 	Case "inet"
 		ae_object = inet! 
 	
@@ -16262,6 +16277,18 @@ Choose Case as_source
 	
 	Case "jaguarorb"
 		ae_object = jaguarorb! 
+	
+	Case "jsongenerator"
+		ae_object = jsongenerator! 
+	
+	Case "jsonpackage"
+		ae_object = jsonpackage! 
+	
+	Case "jsonparser"
+		ae_object = jsonparser! 
+	
+	Case "jwtgenerator"
+		ae_object = jwtgenerator! 
 	
 	Case "line"
 		ae_object = line! 
@@ -16319,6 +16346,12 @@ Choose Case as_source
 	
 	Case "notype"
 		ae_object = notype! 
+	
+	Case "oauthclient"
+		ae_object = oauthclient! 
+	
+	Case "oauthrequest"
+		ae_object = oauthrequest! 
 	
 	Case "objhandle"
 		ae_object = objhandle! 
@@ -16413,11 +16446,56 @@ Choose Case as_source
 	Case "remoteobject"
 		ae_object = remoteobject! 
 	
+	Case "resourceresponse"
+		ae_object = resourceresponse! 
+	
+	Case "restclient"
+		ae_object = restclient! 
+	
 	Case "resultset"
 		ae_object = resultset! 
 	
 	Case "resultsets"
 		ae_object = resultsets! 
+	
+	Case "ribbonapplicationbuttonitem"
+		ae_object = ribbonapplicationbuttonitem! 
+	
+	Case "ribbonapplicationmenu"
+		ae_object = ribbonapplicationmenu! 
+	
+	Case "ribbonbar"
+		ae_object = ribbonbar! 
+	
+	Case "ribboncategoryitem"
+		ae_object = ribboncategoryitem! 
+	
+	Case "ribboncheckboxitem"
+		ae_object = ribboncheckboxitem! 
+	
+	Case "ribboncomboboxitem"
+		ae_object = ribboncomboboxitem! 
+	
+	Case "ribbongroupitem"
+		ae_object = ribbongroupitem! 
+	
+	Case "ribbonlargebuttonitem"
+		ae_object = ribbonlargebuttonitem! 
+	
+	Case "ribbonmenu"
+		ae_object = ribbonmenu! 
+	
+	Case "ribbonmenuitem"
+		ae_object = ribbonmenuitem! 
+	
+	Case "ribbonpanelitem"
+		ae_object = ribbonpanelitem! 
+	
+	Case "ribbonsmallbuttonitem"
+		ae_object = ribbonsmallbuttonitem! 
+	
+	Case "ribbontabbuttonitem"
+		ae_object = ribbontabbuttonitem! 
 	
 	Case "richtextedit"
 		ae_object = richtextedit! 
@@ -16469,6 +16547,12 @@ Choose Case as_source
 	
 	Case "timing"
 		ae_object = timing! 
+	
+	Case "tokenrequest"
+		ae_object = tokenrequest! 
+	
+	Case "tokenresponse"
+		ae_object = tokenresponse! 
 	
 	Case "traceactivitynode"
 		ae_object = traceactivitynode! 
@@ -16568,6 +16652,9 @@ Choose Case as_source
 	
 	Case "vtrackbar"
 		ae_object = vtrackbar! 
+	
+	Case "webbrowser"
+		ae_object = webbrowser! 
 	
 	Case "window"
 		ae_object = window! 
