@@ -12,3 +12,10 @@ If you would like to contribute to the project, please watch this video:
 
 https://vimeo.com/478243534
 
+The help files are not included in this repository.  Each one is published as a release in its own repository; download it and put it beside your application's exe:
+
+- [pfcdlg.chm](https://github.com/OpenSourcePFCLibraries/PFCDLG-help-file-and-source/releases/latest/download/pfcdlg.chm): help for the PFC dialogs ([PFCDLG-help-file-and-source](https://github.com/OpenSourcePFCLibraries/PFCDLG-help-file-and-source/releases/latest))
+- [PBPFC110.chm](https://github.com/OpenSourcePFCLibraries/Help-File-Source/releases/latest/download/PBPFC110.chm): the PFC help file, used by the security administrator ([Help-File-Source](https://github.com/OpenSourcePFCLibraries/Help-File-Source/releases/latest))
+- [PFCEXAMP.chm](https://github.com/OpenSourcePFCLibraries/Example-application-help-file/releases/latest/download/PFCEXAMP.chm): help for the PFC example application ([Example-application-help-file](https://github.com/OpenSourcePFCLibraries/Example-application-help-file/releases/latest))
+- [pfctutor.chm](https://github.com/OpenSourcePFCLibraries/PFCTUTOR-help-file-and-source/releases/latest/download/pfctutor.chm): help for the PFC tutorial ([PFCTUTOR-help-file-and-source](https://github.com/OpenSourcePFCLibraries/PFCTUTOR-help-file-and-source/releases/latest))
+
