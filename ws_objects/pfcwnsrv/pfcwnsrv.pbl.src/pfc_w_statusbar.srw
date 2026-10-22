@@ -42,6 +42,7 @@ boolean		ib_win10= False
 w_frame 		iw_parentwindow
 n_cst_platform 	inv_platform
 long	il_backgroundcolor = 78682240  // buttonface
+long	il_textcolor = 33554432  // window text
 end variables
 
 forward prototypes
@@ -59,6 +60,7 @@ protected function integer of_getsystemsettings ()
 protected function long of_color (string as_rgb)
 protected function integer of_restorefocuspoint (graphicobject ago_focus)
 public function integer of_setbackgroundcolor (long al_backgroundcolor)
+public function integer of_settextcolor (long al_textcolor)
 end prototypes
 
 event wininichange;call super::wininichange;//////////////////////////////////////////////////////////////////////////////
@@ -707,14 +709,16 @@ public function integer of_refreshcolors ();////////////////////////////////////
 //
 //	Description:
 //	Refreshes the colors of all the appropriate objects to match the desired
-//	background color.
+//	background and text colors.  The progress bar text keeps its own color
+//	(n_cst_winsrv_statusbar.of_SetBarTextColor).
 //
 //////////////////////////////////////////////////////////////////////////////
-//	
+//
 //	Revision History
 //
 //	Version
 //	5.0   Initial version
+//	2019	Text color
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -752,11 +756,14 @@ ls_allobjects = dw_statusbar.Describe('DataWindow.Objects')
 // Set window background
 this.backcolor = il_backgroundcolor
 
-// Set each datawindow object background to match
+// Set each datawindow object background to match, and the color of the text
 DO UNTIL Len(ls_allobjects) <= 0
 	ls_object = lnv_string.of_gettoken(ls_allobjects,'~t')
 	ls_modifyexp =	ls_object+".Background.Color='"+string(il_backgroundcolor)+"' "
-	ls_rc = dw_statusbar.Modify (ls_modifyexp)	
+	If dw_statusbar.Describe(ls_object + ".Type") = "compute" And ls_object <> "pfc_progress_border" Then
+		ls_modifyexp += ls_object+".Color='"+string(il_textcolor)+"' "
+	End If
+	ls_rc = dw_statusbar.Modify (ls_modifyexp)
 LOOP
 
 Return 1
@@ -1199,6 +1206,61 @@ End If
 
 // Store the value for later use.
 il_backgroundcolor = al_backgroundcolor
+
+Return 1
+end function
+
+public function integer of_settextcolor (long al_textcolor);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_SetTextColor
+//
+//	Access:  public
+//
+//	Arguments:
+//	al_textcolor	color of the status bar text
+//
+//	Returns:  Integer
+//	 1 if it succeeds, -1 if the color is not valid
+//
+//	Description:  Stores the text color; of_RefreshColors applies it.  Called by
+//		n_cst_winsrv_statusbar.of_SetTextColor.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2019	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+If IsNull(al_textcolor) or al_textcolor < 0 Then
+	Return -1
+End If
+
+il_textcolor = al_textcolor
 
 Return 1
 end function

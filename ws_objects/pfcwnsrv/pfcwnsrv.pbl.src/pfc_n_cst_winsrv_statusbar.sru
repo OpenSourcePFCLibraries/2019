@@ -77,8 +77,10 @@ integer		ii_barstarty
 long		il_barfillcolor = 10789024	// med gray
 long		il_bartextcolor = 0 		//black
 
-long il_backgroundcolor = 12632256 // Gray
-long il_textcolor = 33554432  // Window Text
+// Status bar colors set by the application; -1 = not set: pfc_w_statusbar uses the
+// system ButtonFace color (no color when a theme is applied) and the Window Text color
+long il_backgroundcolor = -1
+long il_textcolor = -1
 
 w_statusbar	iw_statusbar
 //	7.0   Instance variable datatype changed from os_dwobjects to n_cst_winsrv_statusbarattrib type
@@ -592,9 +594,13 @@ If ab_switch Then
 	// Open the status bar window.
 	li_rc = Open(iw_statusbar, iw_requestor)
 	
-	//Set the background color and refresh the status bar display
-	iw_statusbar.of_setbackgroundcolor( il_backgroundcolor )
-	iw_statusbar.of_refreshcolors()
+	// Apply the colors the application set (otherwise the window keeps its own)
+	// and refresh the status bar display
+	If IsValid(iw_statusbar) Then
+		If il_backgroundcolor >= 0 Then iw_statusbar.of_SetBackgroundColor(il_backgroundcolor)
+		If il_textcolor >= 0 Then iw_statusbar.of_SetTextColor(il_textcolor)
+		iw_statusbar.of_RefreshColors()
+	End If
 	
 	// Restore the focus to the previous object.
 	of_RestoreFocusPoint(lgo_withfocus)
@@ -5083,6 +5089,30 @@ end function
 
 public function integer of_settextcolor (long al_textcolor);//////////////////////////////////////////////////////////////////////////////
 //
+//	Function:  of_SetTextColor
+//
+//	Access:  public
+//
+//	Arguments:
+//	al_textcolor	color of the status bar text (an RGB value or a system color)
+//
+//	Returns:  Integer
+//	 1 if it succeeds, -1 if the color is not valid
+//
+//	Description:  Sets the color of the status bar text.  Without it, the text uses the
+//		Window Text color.  The status bar is drawn by a DataWindow created at run time,
+//		which UI themes don't style, so set the color of a themed status bar here.  The
+//		progress bar text has its own color (of_SetBarTextColor).
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2019	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
 /*
  * Open Source PowerBuilder Foundation Class Libraries
  *
@@ -5104,7 +5134,7 @@ public function integer of_settextcolor (long al_textcolor);////////////////////
 */
 //
 //////////////////////////////////////////////////////////////////////////////
-integer	li_rc
+integer	li_rc = 1
 
 if isnull(al_textcolor) or (al_textcolor < 0) then
 	return -1
@@ -5114,13 +5144,40 @@ il_textcolor = al_textcolor
 
 // Notify the GUI of the change.
 If IsValid(iw_statusbar) Then
-	li_rc = iw_statusbar.of_CreateVisuals()
+	li_rc = iw_statusbar.of_SetTextColor(il_textcolor)
+	If li_rc = 1 Then li_rc = iw_statusbar.of_RefreshColors()
 End If
 
 Return li_rc
 end function
 
 public function integer of_setbackgroundcolor (long al_backgroundcolor);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_SetBackgroundColor
+//
+//	Access:  public
+//
+//	Arguments:
+//	al_backgroundcolor	background color of the status bar (an RGB value or a system color)
+//
+//	Returns:  Integer
+//	 1 if it succeeds, -1 if the color is not valid
+//
+//	Description:  Sets the background color of the status bar.  Without it, the status
+//		bar uses the system ButtonFace color, or no color of its own when a UI theme is
+//		applied.  The status bar is drawn by a DataWindow created at run time, which UI
+//		themes don't style: for a themed application, set the color of the theme's status
+//		bar here, and the same background color for w_statusbar.dw_statusbar in the theme
+//		file.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2019	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
 //
 /*
  * Open Source PowerBuilder Foundation Class Libraries
@@ -5143,7 +5200,7 @@ public function integer of_setbackgroundcolor (long al_backgroundcolor);////////
 */
 //
 //////////////////////////////////////////////////////////////////////////////
-integer	li_rc
+integer	li_rc = 1
 
 if isnull(al_backgroundcolor) or (al_backgroundcolor < 0) then
 	return -1
@@ -5154,7 +5211,7 @@ il_backgroundcolor = al_backgroundcolor
 // Notify the GUI of the change.
 If IsValid(iw_statusbar) Then
 	li_rc = iw_statusbar.of_setbackgroundcolor(il_backgroundcolor)
-	li_rc = iw_statusbar.of_CreateVisuals()
+	If li_rc = 1 Then li_rc = iw_statusbar.of_CreateVisuals()
 End If
 
 Return li_rc
