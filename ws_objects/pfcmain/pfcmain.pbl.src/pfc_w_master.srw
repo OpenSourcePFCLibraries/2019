@@ -189,6 +189,9 @@ event pfc_messagerouter;////////////////////////////////////////////////////////
 //	Description:	 
 //	This event routes a message (event notification) 
 //	to the appropriate object.
+//	pfc_print and pfc_printimmediate go on to the current control or the last active
+//	datawindow unless this window's event returns 1 (it printed): this window's
+//	events only fire pfc_preprint and pfc_postprint around the printing.
 //
 //////////////////////////////////////////////////////////////////////////////
 //	
@@ -196,6 +199,8 @@ event pfc_messagerouter;////////////////////////////////////////////////////////
 //
 //	Version
 //	5.0   Initial version
+//	2025	pfc_print and pfc_printimmediate reach the datawindow again (#38), and the
+//			window isn't sent the message twice when no control has focus
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -229,12 +234,25 @@ If IsNull (as_message) or Len (Trim (as_message)) = 0 Then
 End If
 
 // Try sending the message to this window, if successful exit event.
-If This.TriggerEvent (as_message) = 1 Then Return 1
+// TriggerEvent returns 1 whenever the window has a script for the event, so for the
+// print events, whose script here only fires pfc_preprint and pfc_postprint, use
+// the event's return value instead: 1 if the window printed.
+Choose Case Lower (as_message)
+	Case "pfc_print"
+		If This.Event pfc_print() = 1 Then Return 1
+	Case "pfc_printimmediate"
+		If This.Event pfc_printimmediate() = 1 Then Return 1
+	Case Else
+		If This.TriggerEvent (as_message) = 1 Then Return 1
+End Choose
 
 // Try sending the message to the current control, if successful exit event.
+// (When no control has focus, the focus is this window, which has been tried.)
 lgo_focus = GetFocus()
 If IsValid (lgo_focus) Then
-	If lgo_focus.TriggerEvent (as_message) = 1 Then Return 1
+	If lgo_focus <> This Then
+		If lgo_focus.TriggerEvent (as_message) = 1 Then Return 1
+	End If
 End If
 
 // Try sending the message to the last active datawindow, if successful exit event.
@@ -374,8 +392,9 @@ event type integer pfc_print();/////////////////////////////////////////////////
 //	Arguments:	None	
 //
 //	Returns:  integer
-//	 1 = success
-//	 0 = nothing done
+//	 1 = success (this window printed; the message router stops here)
+//	 0 = nothing done (the message router passes the message on to the current
+//	     control or the last active datawindow, which print)
 //	-1 = error
 //
 //	Description:
@@ -390,6 +409,8 @@ event type integer pfc_print();/////////////////////////////////////////////////
 //	Version
 // 5.0 	Initial version	
 // 12.5 	Add pre & post print process handling.
+// 2025	The message router passes the message on when this returns 0 (#38).
+//		Extend it to print and Return 1, or let the datawindow print.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -429,8 +450,9 @@ event type integer pfc_printimmediate();////////////////////////////////////////
 //	Arguments:	None	
 //
 //	Returns:  integer
-//	 1 = success
-//	 0 = nothing done
+//	 1 = success (this window printed; the message router stops here)
+//	 0 = nothing done (the message router passes the message on to the current
+//	     control or the last active datawindow, which print)
 //	-1 = error
 //
 //	Description:
@@ -445,6 +467,8 @@ event type integer pfc_printimmediate();////////////////////////////////////////
 //	Version
 // 5.0 	Initial version	
 // 12.5 	Add pre & post print process handling.
+// 2025	The message router passes the message on when this returns 0 (#38).
+//		Extend it to print and Return 1, or let the datawindow print.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
