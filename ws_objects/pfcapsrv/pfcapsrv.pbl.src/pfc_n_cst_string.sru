@@ -36,6 +36,7 @@ public function boolean of_iswhitespace (string as_source)
 public function boolean of_isalpha (string as_source)
 public function boolean of_isalphanum (string as_source)
 public function string of_quote (string as_source)
+public function string of_expressionstring (string as_value)
 public function boolean of_isspace (string as_source)
 public function boolean of_ispunctuation (string as_source)
 public function long of_lastpos (string as_source, string as_target, long al_start)
@@ -861,6 +862,70 @@ End If
 // Enclosed original string in quotations.
 return '"' + as_source + '"'
 
+end function
+
+public function string of_expressionstring (string as_value);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_ExpressionString
+//
+//	Access: 			public
+//
+//	Arguments:
+//	as_value			A value, for example a column's data or text the user typed.
+//
+//	Returns:  		String
+//						The value as a string in a DataWindow expression (for Find,
+//						Filter, SetFilter or Evaluate): between single quotes, with each
+//						~ written as ~~ and each ' written as ~'.
+//						If the argument's value is NULL, function returns NULL.
+//
+//	Description:  	A value put between quotes as it is breaks the expression when
+//						it contains a single quote (O'Brien), and changes when it contains
+//						a tilde (~t is a tab in an expression).
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#40)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+string	ls_value
+
+//Check parameters
+If IsNull(as_value) Then
+	Return as_value
+End If
+
+// The tildes first, so that the ones added for the quotes stay single
+ls_value = of_GlobalReplace(as_value, "~~", "~~~~", False)
+ls_value = of_GlobalReplace(ls_value, "'", "~~'", False)
+
+Return "'" + ls_value + "'"
 end function
 
 public function boolean of_isspace (string as_source);//////////////////////////////////////////////////////////////////////////////

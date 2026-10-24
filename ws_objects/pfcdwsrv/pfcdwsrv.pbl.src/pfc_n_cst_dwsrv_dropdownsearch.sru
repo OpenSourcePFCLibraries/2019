@@ -67,6 +67,8 @@ event pfc_editchanged;call super::pfc_editchanged;//////////////////////////////
 //
 //	Version
 //	5.0   Initial version
+//	2025	The typed text is escaped in the find expression (of_ExpressionString): a
+//			single quote in it made the expression invalid (#40)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -84,13 +86,14 @@ event pfc_editchanged;call super::pfc_editchanged;//////////////////////////////
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals and was originally based on software copyright (c) 
+ * individuals and was originally based on software copyright (c)
  * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
  * information on the Open Source PowerBuilder Foundation Class
  * Libraries see https://github.com/OpenSourcePFCLibraries
 */
 //
 //////////////////////////////////////////////////////////////////////////////
+n_cst_string	lnv_string
 integer		li_searchtextlen
 long			ll_findrow
 string		ls_dddw_displaycol
@@ -132,7 +135,7 @@ If inv_columns[ii_currentindex].s_editstyle = 'dddw' Then
 	// entered in the parent datawindow column.
 	ls_dddw_displaycol = adwo_obj.dddw.displaycolumn
 	ls_findexp = "Lower (Left (" + ls_dddw_displaycol + ", " + &
-		String (li_searchtextlen) + ")) = '" + Lower (ls_searchtext) + "'"
+		String (li_searchtextlen) + ")) = " + lnv_string.of_ExpressionString (Lower (ls_searchtext))
 
 	// Perform the Search on the dddw.
 	ll_dddw_rowcount = inv_columns[ii_currentindex].dwc_object.rowcount()

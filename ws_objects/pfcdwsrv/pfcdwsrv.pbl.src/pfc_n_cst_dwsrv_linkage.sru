@@ -7288,6 +7288,7 @@ protected function string of_getvalue (long al_row, string as_column);//////////
 //			data from the master.
 //	5.0.03 Added Quote to date, datetime, and time strings.
 // 6.0   Function is no longer used by service.  Obsoleted.
+//	2025	String values are escaped (of_ExpressionString) (#40)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -7313,6 +7314,7 @@ protected function string of_getvalue (long al_row, string as_column);//////////
 //
 //////////////////////////////////////////////////////////////////////////////
 String	ls_string
+n_cst_string	lnv_string
 
 // Verify passed arguments.
 If al_row<=0 or Len(Trim(as_column))=0 or IsNull(as_column) Then Return ""
@@ -7332,7 +7334,7 @@ Choose Case Lower ( Left ( idw_master.Describe ( as_column + ".ColType" ) , 5 ) 
 
 	Case "char("	
 		// CHARACTER DATATYPE
-		ls_string = "'" + ls_string + "'"
+		ls_string = lnv_string.of_ExpressionString(ls_string)
 	
 	Case "date"					
 		// DATE DATATYPE
