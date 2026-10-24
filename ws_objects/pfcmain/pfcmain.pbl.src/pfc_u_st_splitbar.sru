@@ -73,6 +73,9 @@ long	il_barcolor=78682240
 long	il_barmovecolor=8421504
 integer	ii_minobjectsize = 20
 boolean	ib_performredraw=True
+// Resize the registered objects while the bar moves, not only when it is dropped
+// (of_SetLiveResize)
+boolean	ib_liveresize=False
 
 //-- Internal attributes. --
 boolean	ib_supported = True
@@ -113,6 +116,8 @@ public function integer of_unregister (windowobject awo_object)
 public subroutine of_move (long al_newx, long al_newy)
 private subroutine of_moved (integer ai_pointerx, integer ai_pointery)
 private subroutine of_previousposition (integer ai_prevpositionx, integer ai_prevpositiony)
+public function integer of_setliveresize (boolean ab_switch)
+public function boolean of_isliveresize ()
 end prototypes
 
 event mousemove;//////////////////////////////////////////////////////////////////////////////
@@ -1722,6 +1727,7 @@ protected function integer of_mousemove (unsignedlong aul_flags, integer ai_xpos
 //
 //	Version
 //	6.0   Initial version
+//	2025	With of_SetLiveResize(TRUE), the registered objects resize as the bar moves (#49)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1842,6 +1848,14 @@ ElseIf ii_style = VERTICAL Then
 		End If
 	End If
 		
+End If
+
+// Live resize: resize the registered objects now, for the distance the bar moved.
+// of_Moved starts the next move from here; lbuttonup then has nothing left to do.
+If ib_liveresize Then
+	If (ii_style = HORIZONTAL And li_prevy <> this.Y) Or (ii_style = VERTICAL And li_prevx <> this.X) Then
+		of_Moved(this.X, this.Y)
+	End If
 End If
 
 Return 1
@@ -3068,6 +3082,104 @@ Else
 End If
 
 end event
+
+public function integer of_setliveresize (boolean ab_switch);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_SetLiveResize
+//
+//	Access:  		Public
+//
+//	Arguments:
+//	ab_switch		TRUE: the registered objects resize while the user drags the bar;
+//						FALSE (the default): they resize when the bar is dropped
+//
+//	Returns:  		Integer
+//						1 if it succeeds and -1 if an error occurs.
+//
+//	Description:	Live resizing redraws the registered objects at every mouse move,
+//						which can be slow for objects that take long to redraw.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#49)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+If IsNull(ab_switch) Then Return -1
+ib_liveresize = ab_switch
+Return 1
+end function
+
+public function boolean of_isliveresize ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_IsLiveResize
+//
+//	Access:  		Public
+//
+//	Arguments:		None
+//
+//	Returns:  		Boolean
+//						TRUE if the registered objects resize while the bar moves
+//						(of_SetLiveResize)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#49)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+Return ib_liveresize
+end function
 
 on pfc_u_st_splitbar.create
 call super::create
