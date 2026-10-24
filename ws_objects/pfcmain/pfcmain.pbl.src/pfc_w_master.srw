@@ -56,6 +56,12 @@ event pfc_postprint ( )
 end type
 global pfc_w_master pfc_w_master
 
+type prototypes
+// The window's frame, for of_GetOrigSize (the pfc_ names don't clash with a descendant's)
+Function boolean pfc_GetClientRect (longptr al_hwnd, ref blob ablb_rect) Library "user32.dll" Alias For "GetClientRect"
+Function boolean pfc_GetWindowRect (longptr al_hwnd, ref blob ablb_rect) Library "user32.dll" Alias For "GetWindowRect"
+end prototypes
+
 type variables
 Public:
 // - Common return value constants:
@@ -122,6 +128,7 @@ public function integer of_update (boolean ab_accepttext, boolean ab_resetflag)
 protected function integer of_messagebox (string as_id, string as_title, string as_text, icon ae_icon, button ae_button, integer ai_default)
 public function integer of_setdberrormsg (n_cst_dberrorattrib anv_dberrorattrib)
 public function integer of_setstyle (boolean ab_switch)
+protected subroutine of_getorigsize (ref integer ai_width, ref integer ai_height)
 end prototypes
 
 event pfc_controlgotfocus;//////////////////////////////////////////////////////////////////////////////
@@ -2074,11 +2081,13 @@ public function integer of_setresize (boolean ab_switch);///////////////////////
 //						5.0   Initial version
 //						8.0   Modified to initially set window dimensions based on the class definition
 //						12.5	11001		Reverting original size logic back to pre 8.0 logic
+//						2025	The original size is the window's design-time workspace (of_GetOrigSize),
+//								also when PowerBuilder opened it smaller (#44)
 //////////////////////////////////////////////////////////////////////////////
-//	Copyright © 1996-2001 Sybase, Inc. and its subsidiaries.  All rights reserved.  Any distribution of the 
+//	Copyright © 1996-2001 Sybase, Inc. and its subsidiaries.  All rights reserved.  Any distribution of the
 // PowerBuilder Foundation Classes (PFC) source code by other than Sybase, Inc. and its subsidiaries is prohibited.
 //////////////////////////////////////////////////////////////////////////////
-integer	li_rc, li_v, li_vars
+integer	li_rc
 integer li_origwidth, li_origheight
 
 // Check arguments
@@ -2089,20 +2098,10 @@ end if
 if ab_Switch then
 	if IsNull(inv_resize) Or not IsValid (inv_resize) then
 		inv_resize = create n_cst_resize
-		
-//		/*  Get this window's class definition and extract the width and height  */
-//		classdefinition lcd_class
-//		lcd_class = this.ClassDefinition
-//		
-//		li_vars = UpperBound ( lcd_class.VariableList )
-//		For li_v = 1 to li_vars
-//			If lcd_class.VariableList[li_v].Name = "width" Then li_origwidth = Integer ( lcd_class.VariableList[li_v].InitialValue ) 
-//			If lcd_class.VariableList[li_v].Name = "height" Then li_origheight = Integer ( lcd_class.VariableList[li_v].InitialValue ) 
-//			If li_origwidth > 0 And li_origheight > 0 Then Exit
-//		Next
-//		inv_resize.of_SetOrigSize ( li_origwidth, li_origheight )
 
-		inv_resize.of_setOrigSize(this.WorkSpaceWidth(), this.WorkSpaceHeight())
+		// The size the controls were laid out for
+		of_GetOrigSize(li_origwidth, li_origheight)
+		inv_resize.of_setOrigSize(li_origwidth, li_origheight)
 		li_rc = 1
 	end if
 else
@@ -2114,6 +2113,95 @@ end If
 
 return li_rc
 end function
+
+protected subroutine of_getorigsize (ref integer ai_width, ref integer ai_height);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_GetOrigSize
+//
+//	Access:  protected
+//
+//	Arguments:
+//	ai_width		(by reference) the width of the window's workspace at design time
+//	ai_height	(by reference) its height
+//
+//	Returns:  None
+//
+//	Description:  The size of the workspace the window's controls were laid out for, the
+//		resize service's original size (of_SetResize).
+//		The workspace now isn't always that size: PowerBuilder opens a sheet smaller
+//		when it doesn't fit in the frame, a window can open maximized, and while a
+//		window opens, Windows makes it a little larger than its Width and Height (they
+//		don't say so until it is resized).  The design-time Width and Height (the class
+//		definition's initial values) include the frame: the border, the title bar, the
+//		menu bar and the scroll bars.  The frame is as large now as it was then, so the
+//		workspace at design time is the design size less the frame, which is measured
+//		with Windows' window and client rectangles (in pixels: PowerBuilder's Width and
+//		WorkSpaceWidth disagree while the window opens).
+//		When the design size can't be read, the workspace now is used.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#44)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+n_cst_metaclass	lnv_metaclass
+classdefinition	lcd_class
+any					la_width, la_height
+blob{16}				lblb_window, lblb_client
+long					ll_framex, ll_framey, ll_width, ll_height
+
+// The workspace now, in case the design size can't be read
+ai_width = This.WorkSpaceWidth()
+ai_height = This.WorkSpaceHeight()
+
+lcd_class = This.ClassDefinition
+la_width = lnv_metaclass.of_GetInitialValue(lcd_class, "width")
+la_height = lnv_metaclass.of_GetInitialValue(lcd_class, "height")
+If IsNull(la_width) Or IsNull(la_height) Then Return
+If Not IsNumber(String(la_width)) Or Not IsNumber(String(la_height)) Then Return
+
+// The frame, in pixels: the window rectangle (left, top, right, bottom) less the
+// client rectangle (0, 0, width, height)
+If Not pfc_GetWindowRect(Handle(This), lblb_window) Then Return
+If Not pfc_GetClientRect(Handle(This), lblb_client) Then Return
+ll_framex = (Long(BlobMid(lblb_window, 9, 4)) - Long(BlobMid(lblb_window, 1, 4))) - Long(BlobMid(lblb_client, 9, 4))
+ll_framey = (Long(BlobMid(lblb_window, 13, 4)) - Long(BlobMid(lblb_window, 5, 4))) - Long(BlobMid(lblb_client, 13, 4))
+If ll_framex < 0 Or ll_framey < 0 Then Return
+
+// The design size less the frame
+ll_width = PixelsToUnits(UnitsToPixels(Long(la_width), XUnitsToPixels!) - ll_framex, XPixelsToUnits!)
+ll_height = PixelsToUnits(UnitsToPixels(Long(la_height), YUnitsToPixels!) - ll_framey, YPixelsToUnits!)
+If ll_width <= 0 Or ll_height <= 0 Or ll_width > 32767 Or ll_height > 32767 Then Return
+
+ai_width = ll_width
+ai_height = ll_height
+end subroutine
 
 public function integer of_setbase (boolean ab_switch);//////////////////////////////////////////////////////////////////////////////
 //
