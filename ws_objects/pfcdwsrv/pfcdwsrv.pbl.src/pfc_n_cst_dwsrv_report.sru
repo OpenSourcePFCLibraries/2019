@@ -353,6 +353,8 @@ protected function integer of_gettextsizepos (string as_text, string as_band, al
 //	Version
 //	5.0   Initial version
 // 5.0.02 Check return value on ParseToArray to exit if no text is passed
+//	2025	The width is the widest line's, measured, not the one with the most characters,
+//			and the height that of all the lines (n_cst_platform of_GetTextSize, #42)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -379,7 +381,7 @@ protected function integer of_gettextsizepos (string as_text, string as_band, al
 //////////////////////////////////////////////////////////////////////////////
 
 String			ls_Line[], ls_Text
-Integer			li_NewLines, li_Cnt, li_Line, li_LineWidth, li_CurrentHeight, li_DwWidth
+Integer			li_NewLines, li_CurrentHeight, li_DwWidth
 window	lw_parent
 n_cst_string	lnv_String
 
@@ -388,16 +390,9 @@ n_cst_string	lnv_String
 li_NewLines = lnv_string.of_ParseToArray(as_Text, "~r~n", ls_Line)
 If li_NewLines <= 0 or IsNull(li_NewLines) Then Return -1
 
-// Find the longest line
-For li_Cnt = 1 to li_NewLines
-	If Len(ls_Line[li_Cnt]) > li_LineWidth Then
-		li_LineWidth = Len(ls_Line[li_Cnt])
-		li_Line = li_Cnt
-	End if
-Next
-If Len(ls_Text) < Len(ls_Line[li_Line]) Then
-	ls_Text = ls_Line[li_Line]
-End if
+// Measure all the lines, each followed by a space, so that the width is the widest
+// line's (not the one with the most characters) and the height is that of all of them
+ls_Text = lnv_String.of_GlobalReplace(as_Text, "~r~n", " ~r~n") + " "
 
 // Verify that the Platform-Specific Services NVO is in use
 If IsNull(inv_Platform) Or Not IsValid(inv_Platform) Then
@@ -407,7 +402,7 @@ End if
 
 // Call function to calculate the text size
 idw_requestor.of_GetParentWindow (lw_parent)
-If inv_Platform.of_gettextsize(lw_parent, ls_Text + " ", as_FontFace, &
+If inv_Platform.of_gettextsize(lw_parent, ls_Text, as_FontFace, &
 											ai_FontSize, ab_Bold, ab_Italic, &
 											ab_Underline, ai_Height, ai_Width) = -1 Then Return -1
 
@@ -417,7 +412,6 @@ If idw_Requestor.Describe("Datawindow.Units") = "0" Then
 	ai_Width = PixelsToUnits(ai_Width, XPixelsToUnits!)
 End if
 
-ai_Height = ai_Height * li_NewLines
 
 // Determine X and Y position
 // If aal_HAlign is null, then X and Y are not needed

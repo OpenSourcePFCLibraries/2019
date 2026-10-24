@@ -472,6 +472,9 @@ public function integer of_GetTextSize (ref window aw_obj, string as_text, strin
 //							5.0		Initial version
 //							5.0.03	Changed Uint variables to Ulong for NT4.0 compatibility
 //							8.0		Not deleting statictext object under certain conditions.
+//							2025		Text with line breaks (~r~n, ~n or ~r): the width of its widest
+//										line and the height of all its lines (#41).  The device
+//										context is released when the measuring fails.
 //////////////////////////////////////////////////////////////////////////////
 /*
  * Open Source PowerBuilder Foundation Class Libraries
@@ -495,9 +498,13 @@ public function integer of_GetTextSize (ref window aw_obj, string as_text, strin
 //////////////////////////////////////////////////////////////////////////////
 Integer		li_Size, li_Len, li_Return, &
 				li_WM_GETFONT = 49 	//  hex 0x0031
-ULong			lul_Hdc, lul_Handle, lul_hFont
+ULong			lul_Hdc, lul_Handle, lul_hFont, lul_hOldFont
 StaticText	lst_Temp
 os_size 		lstr_Size
+String		ls_Text, ls_Lines[]
+Long			ll_Line, ll_Lines
+Boolean		lb_Empty
+n_cst_string	lnv_String
 
 // Datawindow syntax specifies font point size is negative
 li_Size = -1 * ai_FontSize
@@ -520,7 +527,10 @@ If li_Return = 1 Then
 	lst_Temp.Italic = ab_Italic
 	lst_Temp.Underline = ab_Underline
 
-	li_Len = Len(as_Text)
+	// The lines of the text: GetTextExtentPoint32 measures a single line
+	ls_Text = lnv_String.of_GlobalReplace(as_Text, "~r~n", "~n")
+	ls_Text = lnv_String.of_GlobalReplace(ls_Text, "~r", "~n")
+	ll_Lines = lnv_String.of_ParseToArray(ls_Text, "~n", ls_Lines)
 
 	// Get the handle of the StaticText Object and create a Device Context
 	lul_Handle = Handle(lst_Temp)
@@ -530,17 +540,27 @@ If li_Return = 1 Then
 	lul_hFont = Send(lul_Handle, li_WM_GETFONT, 0, 0)
 
 	// Select it into the device context
-	SelectObject(lul_Hdc, lul_hFont)
+	lul_hOldFont = SelectObject(lul_Hdc, lul_hFont)
 
-	// Get the size of the text.
-	If Not GetTextExtentpoint32W(lul_Hdc, as_Text, li_Len, lstr_Size ) Then 
-		aw_obj.CloseUserObject(lst_Temp)
-		Return -1
-	End If
-	
-	ai_Height = lstr_Size.l_cy
-	ai_Width = lstr_Size.l_cx
+	// Get the size of each line: the widest, and the height of them all.  An empty
+	// line is as high as a space.
+	ai_Height = 0
+	ai_Width = 0
+	For ll_Line = 1 To ll_Lines
+		lb_Empty = (Len(ls_Lines[ll_Line]) = 0 And ll_Lines > 1)
+		If lb_Empty Then ls_Lines[ll_Line] = " "
+		li_Len = Len(ls_Lines[ll_Line])
+		If Not GetTextExtentpoint32W(lul_Hdc, ls_Lines[ll_Line], li_Len, lstr_Size ) Then
+			SelectObject(lul_Hdc, lul_hOldFont)
+			ReleaseDC(lul_Handle, lul_Hdc)
+			aw_obj.CloseUserObject(lst_Temp)
+			Return -1
+		End If
+		ai_Height += lstr_Size.l_cy
+		If Not lb_Empty And lstr_Size.l_cx > ai_Width Then ai_Width = lstr_Size.l_cx
+	Next
 
+	SelectObject(lul_Hdc, lul_hOldFont)
 	ReleaseDC(lul_Handle, lul_Hdc)
 
 	li_Return = aw_obj.CloseUserObject(lst_Temp)
