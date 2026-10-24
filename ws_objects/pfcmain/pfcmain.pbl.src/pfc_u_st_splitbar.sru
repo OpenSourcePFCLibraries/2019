@@ -15,6 +15,7 @@ boolean enabled = true
 string text = ""
 event mousemove pbm_mousemove
 event lbuttonup pbm_lbuttonup
+event lbuttondown pbm_lbuttondown
 end type
 global pfc_u_st_splitbar pfc_u_st_splitbar
 
@@ -75,6 +76,8 @@ boolean	ib_performredraw=True
 
 //-- Internal attributes. --
 boolean	ib_supported = True
+// The left mouse button was pressed on the bar: only then does moving the mouse move it
+boolean	ib_lbuttondown = False
 integer	ii_prevpositionx = UNITIALIZED
 integer	ii_prevpositiony = UNITIALIZED
 window	iw_parent
@@ -126,11 +129,15 @@ event mousemove;////////////////////////////////////////////////////////////////
 //	Description:	Perform the Mouse Move processing.
 //
 //////////////////////////////////////////////////////////////////////////////
-//	
+//
 //	Revision History
 //
 //	Version
 //	6.0   Initial version
+//	2025	Only when the left button was pressed on the bar (lbuttondown).  A drag
+//			that started elsewhere moved the bar, but its lbuttonup went to the other
+//			control, so the registered objects weren't resized (#39).  The button
+//			state comes from flags (MK_LBUTTON) instead of KeyDown.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -156,7 +163,14 @@ event mousemove;////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
-If Not KeyDown(keyLeftButton!) Then
+// Only a drag that started on the bar moves it
+If Not ib_lbuttondown Then
+	Return
+End If
+
+// The left button (MK_LBUTTON) is no longer down: the bar missed its lbuttonup
+If Mod(flags, 2) = 0 Then
+	ib_lbuttondown = False
 	Return
 End If
 
@@ -184,6 +198,7 @@ event lbuttonup;////////////////////////////////////////////////////////////////
 //	Version
 //	6.0   Initial version
 //	12.5	10/16/2014			Draw issue, make sure object is always on top
+//	2025	Ends the drag that lbuttondown started (#39)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -201,7 +216,7 @@ event lbuttonup;////////////////////////////////////////////////////////////////
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals and was originally based on software copyright (c) 
+ * individuals and was originally based on software copyright (c)
  * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
  * information on the Open Source PowerBuilder Foundation Class
  * Libraries see https://github.com/OpenSourcePFCLibraries
@@ -209,9 +224,59 @@ event lbuttonup;////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
+ib_lbuttondown = False
+
 of_lbuttonup(flags, xpos, ypos)
 
 this.BringToTop			= TRUE
+end event
+
+event lbuttondown;//////////////////////////////////////////////////////////////////////////////
+//
+//	Event: 			lbuttondown
+//
+//	Arguments:
+//  flags
+//  xpos
+//	 ypos
+//
+//	Returns:  		None.
+//
+//	Description:	Starts a drag of the bar: the left button was pressed on it, so
+//						mousemove moves it until lbuttonup.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#39)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+ib_lbuttondown = True
 end event
 
 public function integer of_setbarcolor (long al_color);//////////////////////////////////////////////////////////////////////////////
