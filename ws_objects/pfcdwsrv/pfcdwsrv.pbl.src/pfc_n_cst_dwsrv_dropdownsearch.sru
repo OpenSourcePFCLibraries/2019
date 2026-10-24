@@ -67,6 +67,8 @@ event pfc_editchanged;call super::pfc_editchanged;//////////////////////////////
 //
 //	Version
 //	5.0   Initial version
+//	2025	The typed text is escaped in the find expression (of_ExpressionString): a
+//			single quote in it made the expression invalid (#40)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -84,13 +86,14 @@ event pfc_editchanged;call super::pfc_editchanged;//////////////////////////////
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals and was originally based on software copyright (c) 
+ * individuals and was originally based on software copyright (c)
  * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
  * information on the Open Source PowerBuilder Foundation Class
  * Libraries see https://github.com/OpenSourcePFCLibraries
 */
 //
 //////////////////////////////////////////////////////////////////////////////
+n_cst_string	lnv_string
 integer		li_searchtextlen
 long			ll_findrow
 string		ls_dddw_displaycol
@@ -132,7 +135,7 @@ If inv_columns[ii_currentindex].s_editstyle = 'dddw' Then
 	// entered in the parent datawindow column.
 	ls_dddw_displaycol = adwo_obj.dddw.displaycolumn
 	ls_findexp = "Lower (Left (" + ls_dddw_displaycol + ", " + &
-		String (li_searchtextlen) + ")) = '" + Lower (ls_searchtext) + "'"
+		String (li_searchtextlen) + ")) = " + lnv_string.of_ExpressionString (Lower (ls_searchtext))
 
 	// Perform the Search on the dddw.
 	ll_dddw_rowcount = inv_columns[ii_currentindex].dwc_object.rowcount()
@@ -215,6 +218,9 @@ event pfc_itemfocuschanged(long al_row, ref dwobject adwo_object);//////////////
 // 12.5  When used with DDLB edit style, this service was not always correctly
 //       processing the user's initial keystroke. This was due to instance var
 //       is_textprev not being properly initialized in this event.
+// 2025	The 12.5 fix read the code table from entry 0, which doesn't exist, so it
+//			never found the column's value and is_textprev stayed empty: the index is
+//			now incremented before GetValue (#52, fix by kberghall).
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -291,6 +297,8 @@ Else
 	li_ddlb_index = 0
 	// Search the ddlb's Code Table for a data value match.
 	Do
+		// Increment the code table index first: GetValue's entries start at 1.
+		li_ddlb_index++
 		ls_ddlb_codetableentry = idw_requestor.GetValue(ls_dwcolname, li_ddlb_index)
 		If ls_ddlb_codetableentry = '' Then
 			// No match found.
@@ -300,15 +308,13 @@ Else
 		li_tabpos = Pos(ls_ddlb_codetableentry, '~t')
 		ls_ddlb_displayvalue = LeftTrim(Mid(ls_ddlb_codetableentry, 1, li_tabpos - 1))
 		ls_ddlb_datavalue    = LeftTrim(Mid(ls_ddlb_codetableentry, li_tabpos + 1))
-		// Increment column index.
-		li_ddlb_index++
 		// Is this code table's data value a match?
 		If Lower(ls_textvalue) = Lower(ls_ddlb_datavalue) Then
 			lb_matchfound = True
 		Else
 			lb_matchfound = False
 		End If
-	Loop Until lb_matchfound Or li_ddlb_index = li_numtabs
+	Loop Until lb_matchfound Or li_ddlb_index >= li_numtabs
 	// Set initial value for "previous text" if a match was found.
 	If lb_matchfound Then
 		is_textprev = ls_ddlb_displayvalue

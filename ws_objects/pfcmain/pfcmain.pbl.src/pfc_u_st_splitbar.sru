@@ -15,6 +15,7 @@ boolean enabled = true
 string text = ""
 event mousemove pbm_mousemove
 event lbuttonup pbm_lbuttonup
+event lbuttondown pbm_lbuttondown
 end type
 global pfc_u_st_splitbar pfc_u_st_splitbar
 
@@ -72,9 +73,14 @@ long	il_barcolor=78682240
 long	il_barmovecolor=8421504
 integer	ii_minobjectsize = 20
 boolean	ib_performredraw=True
+// Resize the registered objects while the bar moves, not only when it is dropped
+// (of_SetLiveResize)
+boolean	ib_liveresize=False
 
 //-- Internal attributes. --
 boolean	ib_supported = True
+// The left mouse button was pressed on the bar: only then does moving the mouse move it
+boolean	ib_lbuttondown = False
 integer	ii_prevpositionx = UNITIALIZED
 integer	ii_prevpositiony = UNITIALIZED
 window	iw_parent
@@ -110,6 +116,8 @@ public function integer of_unregister (windowobject awo_object)
 public subroutine of_move (long al_newx, long al_newy)
 private subroutine of_moved (integer ai_pointerx, integer ai_pointery)
 private subroutine of_previousposition (integer ai_prevpositionx, integer ai_prevpositiony)
+public function integer of_setliveresize (boolean ab_switch)
+public function boolean of_isliveresize ()
 end prototypes
 
 event mousemove;//////////////////////////////////////////////////////////////////////////////
@@ -126,11 +134,15 @@ event mousemove;////////////////////////////////////////////////////////////////
 //	Description:	Perform the Mouse Move processing.
 //
 //////////////////////////////////////////////////////////////////////////////
-//	
+//
 //	Revision History
 //
 //	Version
 //	6.0   Initial version
+//	2025	Only when the left button was pressed on the bar (lbuttondown).  A drag
+//			that started elsewhere moved the bar, but its lbuttonup went to the other
+//			control, so the registered objects weren't resized (#39).  The button
+//			state comes from flags (MK_LBUTTON) instead of KeyDown.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -156,7 +168,14 @@ event mousemove;////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
-If Not KeyDown(keyLeftButton!) Then
+// Only a drag that started on the bar moves it
+If Not ib_lbuttondown Then
+	Return
+End If
+
+// The left button (MK_LBUTTON) is no longer down: the bar missed its lbuttonup
+If Mod(flags, 2) = 0 Then
+	ib_lbuttondown = False
 	Return
 End If
 
@@ -184,6 +203,7 @@ event lbuttonup;////////////////////////////////////////////////////////////////
 //	Version
 //	6.0   Initial version
 //	12.5	10/16/2014			Draw issue, make sure object is always on top
+//	2025	Ends the drag that lbuttondown started (#39)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -201,7 +221,7 @@ event lbuttonup;////////////////////////////////////////////////////////////////
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals and was originally based on software copyright (c) 
+ * individuals and was originally based on software copyright (c)
  * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
  * information on the Open Source PowerBuilder Foundation Class
  * Libraries see https://github.com/OpenSourcePFCLibraries
@@ -209,9 +229,59 @@ event lbuttonup;////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
+ib_lbuttondown = False
+
 of_lbuttonup(flags, xpos, ypos)
 
 this.BringToTop			= TRUE
+end event
+
+event lbuttondown;//////////////////////////////////////////////////////////////////////////////
+//
+//	Event: 			lbuttondown
+//
+//	Arguments:
+//  flags
+//  xpos
+//	 ypos
+//
+//	Returns:  		None.
+//
+//	Description:	Starts a drag of the bar: the left button was pressed on it, so
+//						mousemove moves it until lbuttonup.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#39)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+ib_lbuttondown = True
 end event
 
 public function integer of_setbarcolor (long al_color);//////////////////////////////////////////////////////////////////////////////
@@ -1657,6 +1727,7 @@ protected function integer of_mousemove (unsignedlong aul_flags, integer ai_xpos
 //
 //	Version
 //	6.0   Initial version
+//	2025	With of_SetLiveResize(TRUE), the registered objects resize as the bar moves (#49)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1777,6 +1848,14 @@ ElseIf ii_style = VERTICAL Then
 		End If
 	End If
 		
+End If
+
+// Live resize: resize the registered objects now, for the distance the bar moved.
+// of_Moved starts the next move from here; lbuttonup then has nothing left to do.
+If ib_liveresize Then
+	If (ii_style = HORIZONTAL And li_prevy <> this.Y) Or (ii_style = VERTICAL And li_prevx <> this.X) Then
+		of_Moved(this.X, this.Y)
+	End If
 End If
 
 Return 1
@@ -3003,6 +3082,104 @@ Else
 End If
 
 end event
+
+public function integer of_setliveresize (boolean ab_switch);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_SetLiveResize
+//
+//	Access:  		Public
+//
+//	Arguments:
+//	ab_switch		TRUE: the registered objects resize while the user drags the bar;
+//						FALSE (the default): they resize when the bar is dropped
+//
+//	Returns:  		Integer
+//						1 if it succeeds and -1 if an error occurs.
+//
+//	Description:	Live resizing redraws the registered objects at every mouse move,
+//						which can be slow for objects that take long to redraw.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#49)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+If IsNull(ab_switch) Then Return -1
+ib_liveresize = ab_switch
+Return 1
+end function
+
+public function boolean of_isliveresize ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_IsLiveResize
+//
+//	Access:  		Public
+//
+//	Arguments:		None
+//
+//	Returns:  		Boolean
+//						TRUE if the registered objects resize while the bar moves
+//						(of_SetLiveResize)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#49)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+Return ib_liveresize
+end function
 
 on pfc_u_st_splitbar.create
 call super::create

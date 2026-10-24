@@ -22,6 +22,13 @@ Constant String SCALEBOTTOM = 'ScaleToBottom'
 Constant String SCALERIGHTBOTTOM = 'ScaleToRight&Bottom'
 Constant String FIXEDRIGHT_SCALEBOTTOM = 'FixedToRight&ScaleToBottom'
 Constant String FIXEDBOTTOM_SCALERIGHT = 'FixedToBottom&ScaleToRight'
+// As in the window resize service (n_cst_resize, 12.5): fixed to the center
+// (2025, #48)
+Constant String FIXEDCENTER = 'FixedToCenter'
+Constant String FIXEDCENTERTOP = 'FixedToCenterTop'
+Constant String FIXEDCENTERBOTTOM = 'FixedToCenterBottom'
+Constant String FIXEDCENTERLEFT = 'FixedToCenterLeft'
+Constant String FIXEDCENTERRIGHT = 'FixedToCenterRight'
 
 Protected:
 constant string LINE='line'
@@ -572,6 +579,8 @@ public function integer of_register (string as_control, string as_method);//////
 //						 'ScaleToRight&Bottom'
 //						 'FixedToRight&ScaleToBottom'
 //						 'FixedToBottom&ScaleToRight'
+//						 'FixedToCenter', 'FixedToCenterTop', 'FixedToCenterBottom',
+//						 'FixedToCenterLeft', 'FixedToCenterRight' (2025, #48)
 //
 //	Returns:  		integer
 //	1 if it succeeds and -1 if an error occurs.
@@ -586,6 +595,7 @@ public function integer of_register (string as_control, string as_method);//////
 //
 //	Version
 //	6.0   Initial version
+//	2025	The FIXEDCENTER methods of the window resize service (#48)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -612,6 +622,7 @@ public function integer of_register (string as_control, string as_method);//////
 //////////////////////////////////////////////////////////////////////////////
 
 constant integer FULL_PERCENT= 100
+constant integer CENTERED = 50   // Moves half as far: stays centered as the DataWindow resizes
 integer			li_x, li_y, li_width, li_height
 integer			li_upperbound
 integer			li_cnt
@@ -646,9 +657,22 @@ Choose Case Lower(as_method)
 	Case Lower(FIXEDRIGHT_SCALEBOTTOM)		
 		li_movex = FULL_PERCENT
 		li_scaleheight = FULL_PERCENT
-	Case Lower(FIXEDBOTTOM_SCALERIGHT)	
+	Case Lower(FIXEDBOTTOM_SCALERIGHT)
 		li_movey = FULL_PERCENT
 		li_scalewidth = FULL_PERCENT
+	Case Lower(FIXEDCENTER)
+		li_movex = CENTERED
+		li_movey = CENTERED
+	Case Lower(FIXEDCENTERTOP)
+		li_movex = CENTERED
+	Case Lower(FIXEDCENTERBOTTOM)
+		li_movex = CENTERED
+		li_movey = FULL_PERCENT
+	Case Lower(FIXEDCENTERLEFT)
+		li_movey = CENTERED
+	Case Lower(FIXEDCENTERRIGHT)
+		li_movex = FULL_PERCENT
+		li_movey = CENTERED
 Case Else
 		Return -1
 End Choose

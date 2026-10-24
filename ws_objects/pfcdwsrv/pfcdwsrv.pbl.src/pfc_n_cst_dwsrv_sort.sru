@@ -56,8 +56,10 @@ public function integer of_getpropertyinfo (ref n_cst_propertyattrib anv_attrib)
 public subroutine of_sortindicatornone ()
 public subroutine of_sortindicatordraw ()
 public function string of_getsort (datawindow vdw_getsort)
-private function integer of_setsort (string as_format, boolean ab_pfcclicked)
-private function integer of_setsortdraw (boolean ab_switch)
+protected function integer of_setsort (string as_format, boolean ab_pfcclicked)
+protected subroutine of_settablesort (string as_format)
+protected function integer of_setsortdraw (boolean ab_switch)
+public function n_cst_dwsrv_sortdraw of_getsortdraw ()
 end prototypes
 
 event type integer pfc_clicked(integer ai_xpos, integer ai_ypos, long al_row, ref dwobject adwo_obj);//////////////////////////////////////////////////////////////////////////////
@@ -404,6 +406,8 @@ public function integer of_setsort (string as_format);//////////////////////////
 // 6.0	Use of constants within services.
 //	12.5	If sort order indicator is enabled, then make sure it is not
 //			visible
+//	2025	The criteria are also stored in Table.Sort (of_SetTableSort), so that
+//			they can be read on a DataWindow that shares data (#43)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -439,7 +443,9 @@ If IsNull(idw_Requestor) Or Not IsValid(idw_Requestor) Then Return -1
 // If the parameter is not null, then peform a regular SetSort operation.
 IF Not IsNull (as_format) THEN
 	li_RC					= idw_Requestor.SetSort (as_format)
-	
+	// Keep the criteria readable on a DataWindow that shares data
+	IF li_RC = 1 THEN of_SetTableSort (as_format)
+
 	//	Because we don't know that "state" of the dataWindow for every case,
 	//	it is best to turn off the sort order indicator for now and let the
 	//	user reselect it.  The sort could be set for objects that aren't
@@ -496,7 +502,10 @@ CHOOSE CASE ii_style
 		//	be drawn properly.
 		of_sortIndicatorNone()
 
-		Return idw_Requestor.SetSort (lnv_return.is_rs)
+		li_rc = idw_Requestor.SetSort (lnv_return.is_rs)
+		// Keep the criteria readable on a DataWindow that shares data
+		IF li_rc = 1 THEN of_SetTableSort (lnv_return.is_rs)
+		Return li_rc
 
 END CHOOSE
 
@@ -1632,6 +1641,8 @@ public function string of_getsort (datawindow vdw_getsort);/////////////////////
 //	Revision History
 //
 //	Version			12.5				Initial version
+//						2025				"" instead of "?" for a DataWindow that shares data
+//											and has no sort of its own (#43)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1657,14 +1668,20 @@ public function string of_getsort (datawindow vdw_getsort);/////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
+String	ls_sort
+
 // Check the datawindow reference.
 If IsNull(vdw_getSort) Or Not IsValid(vdw_getSort) Then Return ''
 
 // Return the current sort for the datawindow.
-Return vdw_getSort.Describe ("DataWindow.Table.Sort")
+// A DataWindow that shares data reports "?" when it has no sort of its own: no sort
+// that this service knows of (see of_SetTableSort)
+ls_sort = vdw_getSort.Describe ("DataWindow.Table.Sort")
+If ls_sort = "?" Then ls_sort = ""
+Return ls_sort
 end function
 
-private function integer of_setsort (string as_format, boolean ab_pfcclicked);/////////////////////////////////////////////////////////////////////////
+protected function integer of_setsort (string as_format, boolean ab_pfcclicked);/////////////////////////////////////////////////////////////////////////
 //
 //	Function:  		of_SetSort
 //
@@ -1736,11 +1753,11 @@ END IF
 Return(li_RC)
 end function
 
-private function integer of_setsortdraw (boolean ab_switch);/////////////////////////////////////////////////////////////////////////
+protected function integer of_setsortdraw (boolean ab_switch);/////////////////////////////////////////////////////////////////////////
 //
 //	Function:		of_SetSortDraw
 //
-//	Access:			Private
+//	Access:			Protected
 //
 //	Arguments:		boolean			TRUE	- Start (create) the service
 //   										FALSE	- Stop (destroy ) the service
@@ -1758,6 +1775,8 @@ private function integer of_setsortdraw (boolean ab_switch);////////////////////
 //	Revision History
 //
 //	Version:			12.5		Initial version
+//						2025		Protected (it was private), and the sort order indicator
+//									is destroyed when column header sorting is turned off (#46)
 //
 /////////////////////////////////////////////////////////////////////////
 //
@@ -1785,7 +1804,9 @@ private function integer of_setsortdraw (boolean ab_switch);////////////////////
 IF IsNull(ab_switch) THEN Return(FAILURE)
 
 //	Must turn on column header click sorting first
-IF NOT of_getColumnHeader() THEN Return(FAILURE)
+// Only column header sorting has a sort order indicator.  (Turning it off is not
+// checked: of_SetColumnHeader(FALSE) has turned column header sorting off already.)
+IF ab_switch AND NOT of_getColumnHeader() THEN Return(FAILURE)
 
 IF ab_switch THEN
 	IF IsNull(invo_sortDraw) OR NOT IsValid (invo_sortDraw) THEN
@@ -1814,6 +1835,118 @@ ELSE
 END IF
 
 Return(NO_ACTION)
+end function
+
+protected subroutine of_settablesort (string as_format);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_SetTableSort
+//
+//	Access:    		Protected
+//
+//	Arguments:
+//   as_format:  	The sort criteria just set with SetSort.
+//
+//	Returns:   		None
+//
+//	Description:  Stores the sort criteria in the DataWindow's Table.Sort property, so
+//					  that of_GetSort, the sort dialogs and the sort order indicator can
+//					  read them.  For a DataWindow that shares the data of another
+//					  (ShareData), SetSort sorts the shared rows and stores the criteria
+//					  in the primary DataWindow only: the secondary's Table.Sort stays
+//					  "?".  It then has the sort set through this service, not a sort
+//					  set later on the primary.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#43)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+If IsNull(as_format) Or IsNull(idw_Requestor) Or Not IsValid(idw_Requestor) Then Return
+
+// A primary DataWindow already has them
+If idw_Requestor.Describe("DataWindow.Table.Sort") = as_format Then Return
+
+TRY
+	idw_Requestor.Object.DataWindow.Table.Sort = as_format
+CATCH (throwable lt_error)
+	// The criteria stay unknown, as before
+END TRY
+end subroutine
+
+public function n_cst_dwsrv_sortdraw of_getsortdraw ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_GetSortDraw
+//
+//	Access:    		Public
+//
+//	Arguments:		None
+//
+//	Returns:   		n_cst_dwsrv_sortdraw
+//						The sort order indicator service, or an invalid reference when
+//						there is none (it is created by of_SetColumnHeader(TRUE))
+//
+//	Description:  Gives access to the sort order indicator service, for example to
+//					  set its colors and alignment (of_SetColorLinePrimary,
+//					  of_SetAlignment).
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#46)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+Return invo_sortDraw
 end function
 
 on pfc_n_cst_dwsrv_sort.create

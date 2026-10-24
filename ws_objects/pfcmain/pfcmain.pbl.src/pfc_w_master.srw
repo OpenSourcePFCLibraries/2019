@@ -53,8 +53,18 @@ event type integer pfc_updateobjects ( powerobject apo_control[],  boolean ab_ac
 event type integer pfc_updatespendingref ( powerobject apo_control[],  ref powerobject apo_pending[] )
 event pfc_preprint ( )
 event pfc_postprint ( )
+event pfc_getminmaxinfo pbm_getminmaxinfo
 end type
 global pfc_w_master pfc_w_master
+
+type prototypes
+// The window's frame, for of_GetOrigSize (the pfc_ names don't clash with a descendant's)
+Function boolean pfc_GetClientRect (longptr al_hwnd, ref blob ablb_rect) Library "user32.dll" Alias For "GetClientRect"
+Function boolean pfc_GetWindowRect (longptr al_hwnd, ref blob ablb_rect) Library "user32.dll" Alias For "GetWindowRect"
+// The MINMAXINFO structure of WM_GETMINMAXINFO, for pfc_GetMinMaxInfo
+Subroutine pfc_CopyFromMemory (ref blob ablb_destination, longptr al_source, longptr al_length) Library "kernel32.dll" Alias For "RtlMoveMemory"
+Subroutine pfc_CopyToMemory (longptr al_destination, ref blob ablb_source, longptr al_length) Library "kernel32.dll" Alias For "RtlMoveMemory"
+end prototypes
 
 type variables
 Public:
@@ -122,6 +132,7 @@ public function integer of_update (boolean ab_accepttext, boolean ab_resetflag)
 protected function integer of_messagebox (string as_id, string as_title, string as_text, icon ae_icon, button ae_button, integer ai_default)
 public function integer of_setdberrormsg (n_cst_dberrorattrib anv_dberrorattrib)
 public function integer of_setstyle (boolean ab_switch)
+protected subroutine of_getorigsize (ref integer ai_width, ref integer ai_height)
 end prototypes
 
 event pfc_controlgotfocus;//////////////////////////////////////////////////////////////////////////////
@@ -189,6 +200,9 @@ event pfc_messagerouter;////////////////////////////////////////////////////////
 //	Description:	 
 //	This event routes a message (event notification) 
 //	to the appropriate object.
+//	pfc_print and pfc_printimmediate go on to the current control or the last active
+//	datawindow unless this window's event returns 1 (it printed): this window's
+//	events only fire pfc_preprint and pfc_postprint around the printing.
 //
 //////////////////////////////////////////////////////////////////////////////
 //	
@@ -196,6 +210,8 @@ event pfc_messagerouter;////////////////////////////////////////////////////////
 //
 //	Version
 //	5.0   Initial version
+//	2025	pfc_print and pfc_printimmediate reach the datawindow again (#38), and the
+//			window isn't sent the message twice when no control has focus
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -229,12 +245,25 @@ If IsNull (as_message) or Len (Trim (as_message)) = 0 Then
 End If
 
 // Try sending the message to this window, if successful exit event.
-If This.TriggerEvent (as_message) = 1 Then Return 1
+// TriggerEvent returns 1 whenever the window has a script for the event, so for the
+// print events, whose script here only fires pfc_preprint and pfc_postprint, use
+// the event's return value instead: 1 if the window printed.
+Choose Case Lower (as_message)
+	Case "pfc_print"
+		If This.Event pfc_print() = 1 Then Return 1
+	Case "pfc_printimmediate"
+		If This.Event pfc_printimmediate() = 1 Then Return 1
+	Case Else
+		If This.TriggerEvent (as_message) = 1 Then Return 1
+End Choose
 
 // Try sending the message to the current control, if successful exit event.
+// (When no control has focus, the focus is this window, which has been tried.)
 lgo_focus = GetFocus()
 If IsValid (lgo_focus) Then
-	If lgo_focus.TriggerEvent (as_message) = 1 Then Return 1
+	If lgo_focus <> This Then
+		If lgo_focus.TriggerEvent (as_message) = 1 Then Return 1
+	End If
 End If
 
 // Try sending the message to the last active datawindow, if successful exit event.
@@ -374,8 +403,9 @@ event type integer pfc_print();/////////////////////////////////////////////////
 //	Arguments:	None	
 //
 //	Returns:  integer
-//	 1 = success
-//	 0 = nothing done
+//	 1 = success (this window printed; the message router stops here)
+//	 0 = nothing done (the message router passes the message on to the current
+//	     control or the last active datawindow, which print)
 //	-1 = error
 //
 //	Description:
@@ -390,6 +420,8 @@ event type integer pfc_print();/////////////////////////////////////////////////
 //	Version
 // 5.0 	Initial version	
 // 12.5 	Add pre & post print process handling.
+// 2025	The message router passes the message on when this returns 0 (#38).
+//		Extend it to print and Return 1, or let the datawindow print.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -429,8 +461,9 @@ event type integer pfc_printimmediate();////////////////////////////////////////
 //	Arguments:	None	
 //
 //	Returns:  integer
-//	 1 = success
-//	 0 = nothing done
+//	 1 = success (this window printed; the message router stops here)
+//	 0 = nothing done (the message router passes the message on to the current
+//	     control or the last active datawindow, which print)
 //	-1 = error
 //
 //	Description:
@@ -445,6 +478,8 @@ event type integer pfc_printimmediate();////////////////////////////////////////
 //	Version
 // 5.0 	Initial version	
 // 12.5 	Add pre & post print process handling.
+// 2025	The message router passes the message on when this returns 0 (#38).
+//		Extend it to print and Return 1, or let the datawindow print.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1948,6 +1983,86 @@ event pfc_preprint();///////////////////////////////////////////////////////////
 
 end event
 
+event pfc_getminmaxinfo;//////////////////////////////////////////////////////////////////////////////
+//
+//	Event:  pfc_GetMinMaxInfo
+//
+//	Arguments:
+//	minmaxinfo	pointer to the MINMAXINFO structure of WM_GETMINMAXINFO
+//
+//	Returns:  long
+//	 0
+//
+//	Description:
+//	Windows asks for the window's minimum and maximum size.  When the resize service
+//	limits the window's size (n_cst_resize.of_SetWindowMinSize), the user can't make
+//	the window smaller than its minimum size (n_cst_resize.of_SetMinSize, a workspace
+//	size, plus the window's frame).
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#47)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+// MINMAXINFO: five POINTs (two LONGs each): ptReserved, ptMaxSize, ptMaxPosition,
+// ptMinTrackSize (bytes 25 to 32) and ptMaxTrackSize
+Constant Long MINMAXINFO_SIZE = 40
+Constant Long MINTRACKSIZE_X = 25
+Constant Long MINTRACKSIZE_Y = 29
+
+blob{40}	lblb_info
+blob{16}	lblb_window, lblb_client
+integer	li_minwidth, li_minheight
+long		ll_minx, ll_miny
+
+If IsNull(minmaxinfo) Or minmaxinfo = 0 Then Return 0
+If Not IsValid(inv_resize) Then Return 0
+If Not inv_resize.of_IsWindowMinSize() Then Return 0
+If inv_resize.of_GetMinSize(li_minwidth, li_minheight) <> 1 Then Return 0
+
+// The minimum workspace plus the frame, in pixels
+If Not pfc_GetWindowRect(Handle(This), lblb_window) Then Return 0
+If Not pfc_GetClientRect(Handle(This), lblb_client) Then Return 0
+ll_minx = UnitsToPixels(li_minwidth, XUnitsToPixels!) + &
+	(Long(BlobMid(lblb_window, 9, 4)) - Long(BlobMid(lblb_window, 1, 4))) - Long(BlobMid(lblb_client, 9, 4))
+ll_miny = UnitsToPixels(li_minheight, YUnitsToPixels!) + &
+	(Long(BlobMid(lblb_window, 13, 4)) - Long(BlobMid(lblb_window, 5, 4))) - Long(BlobMid(lblb_client, 13, 4))
+
+// Raise the minimum tracking size (never lower it below Windows' own)
+pfc_CopyFromMemory(lblb_info, minmaxinfo, MINMAXINFO_SIZE)
+If ll_minx > Long(BlobMid(lblb_info, MINTRACKSIZE_X, 4)) Then BlobEdit(lblb_info, MINTRACKSIZE_X, ll_minx)
+If ll_miny > Long(BlobMid(lblb_info, MINTRACKSIZE_Y, 4)) Then BlobEdit(lblb_info, MINTRACKSIZE_Y, ll_miny)
+pfc_CopyToMemory(minmaxinfo, lblb_info, MINMAXINFO_SIZE)
+
+Return 0
+end event
+
 event pfc_postprint();//////////////////////////////////////////////////////////////////////////////
 //
 //	Event:  pfc_PostPrint
@@ -2050,11 +2165,13 @@ public function integer of_setresize (boolean ab_switch);///////////////////////
 //						5.0   Initial version
 //						8.0   Modified to initially set window dimensions based on the class definition
 //						12.5	11001		Reverting original size logic back to pre 8.0 logic
+//						2025	The original size is the window's design-time workspace (of_GetOrigSize),
+//								also when PowerBuilder opened it smaller (#44)
 //////////////////////////////////////////////////////////////////////////////
-//	Copyright © 1996-2001 Sybase, Inc. and its subsidiaries.  All rights reserved.  Any distribution of the 
+//	Copyright © 1996-2001 Sybase, Inc. and its subsidiaries.  All rights reserved.  Any distribution of the
 // PowerBuilder Foundation Classes (PFC) source code by other than Sybase, Inc. and its subsidiaries is prohibited.
 //////////////////////////////////////////////////////////////////////////////
-integer	li_rc, li_v, li_vars
+integer	li_rc
 integer li_origwidth, li_origheight
 
 // Check arguments
@@ -2065,20 +2182,10 @@ end if
 if ab_Switch then
 	if IsNull(inv_resize) Or not IsValid (inv_resize) then
 		inv_resize = create n_cst_resize
-		
-//		/*  Get this window's class definition and extract the width and height  */
-//		classdefinition lcd_class
-//		lcd_class = this.ClassDefinition
-//		
-//		li_vars = UpperBound ( lcd_class.VariableList )
-//		For li_v = 1 to li_vars
-//			If lcd_class.VariableList[li_v].Name = "width" Then li_origwidth = Integer ( lcd_class.VariableList[li_v].InitialValue ) 
-//			If lcd_class.VariableList[li_v].Name = "height" Then li_origheight = Integer ( lcd_class.VariableList[li_v].InitialValue ) 
-//			If li_origwidth > 0 And li_origheight > 0 Then Exit
-//		Next
-//		inv_resize.of_SetOrigSize ( li_origwidth, li_origheight )
 
-		inv_resize.of_setOrigSize(this.WorkSpaceWidth(), this.WorkSpaceHeight())
+		// The size the controls were laid out for
+		of_GetOrigSize(li_origwidth, li_origheight)
+		inv_resize.of_setOrigSize(li_origwidth, li_origheight)
 		li_rc = 1
 	end if
 else
@@ -2090,6 +2197,95 @@ end If
 
 return li_rc
 end function
+
+protected subroutine of_getorigsize (ref integer ai_width, ref integer ai_height);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_GetOrigSize
+//
+//	Access:  protected
+//
+//	Arguments:
+//	ai_width		(by reference) the width of the window's workspace at design time
+//	ai_height	(by reference) its height
+//
+//	Returns:  None
+//
+//	Description:  The size of the workspace the window's controls were laid out for, the
+//		resize service's original size (of_SetResize).
+//		The workspace now isn't always that size: PowerBuilder opens a sheet smaller
+//		when it doesn't fit in the frame, a window can open maximized, and while a
+//		window opens, Windows makes it a little larger than its Width and Height (they
+//		don't say so until it is resized).  The design-time Width and Height (the class
+//		definition's initial values) include the frame: the border, the title bar, the
+//		menu bar and the scroll bars.  The frame is as large now as it was then, so the
+//		workspace at design time is the design size less the frame, which is measured
+//		with Windows' window and client rectangles (in pixels: PowerBuilder's Width and
+//		WorkSpaceWidth disagree while the window opens).
+//		When the design size can't be read, the workspace now is used.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#44)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+n_cst_metaclass	lnv_metaclass
+classdefinition	lcd_class
+any					la_width, la_height
+blob{16}				lblb_window, lblb_client
+long					ll_framex, ll_framey, ll_width, ll_height
+
+// The workspace now, in case the design size can't be read
+ai_width = This.WorkSpaceWidth()
+ai_height = This.WorkSpaceHeight()
+
+lcd_class = This.ClassDefinition
+la_width = lnv_metaclass.of_GetInitialValue(lcd_class, "width")
+la_height = lnv_metaclass.of_GetInitialValue(lcd_class, "height")
+If IsNull(la_width) Or IsNull(la_height) Then Return
+If Not IsNumber(String(la_width)) Or Not IsNumber(String(la_height)) Then Return
+
+// The frame, in pixels: the window rectangle (left, top, right, bottom) less the
+// client rectangle (0, 0, width, height)
+If Not pfc_GetWindowRect(Handle(This), lblb_window) Then Return
+If Not pfc_GetClientRect(Handle(This), lblb_client) Then Return
+ll_framex = (Long(BlobMid(lblb_window, 9, 4)) - Long(BlobMid(lblb_window, 1, 4))) - Long(BlobMid(lblb_client, 9, 4))
+ll_framey = (Long(BlobMid(lblb_window, 13, 4)) - Long(BlobMid(lblb_window, 5, 4))) - Long(BlobMid(lblb_client, 13, 4))
+If ll_framex < 0 Or ll_framey < 0 Then Return
+
+// The design size less the frame
+ll_width = PixelsToUnits(UnitsToPixels(Long(la_width), XUnitsToPixels!) - ll_framex, XPixelsToUnits!)
+ll_height = PixelsToUnits(UnitsToPixels(Long(la_height), YUnitsToPixels!) - ll_framey, YPixelsToUnits!)
+If ll_width <= 0 Or ll_height <= 0 Or ll_width > 32767 Or ll_height > 32767 Then Return
+
+ai_width = ll_width
+ai_height = ll_height
+end subroutine
 
 public function integer of_setbase (boolean ab_switch);//////////////////////////////////////////////////////////////////////////////
 //
