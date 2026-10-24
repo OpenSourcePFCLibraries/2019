@@ -26,7 +26,9 @@ end type
 global pfc_w_statusbar pfc_w_statusbar
 
 type prototypes
-
+// The frame's client area in screen coordinates, for of_SetPosition (GetClientRect is
+// declared in pfc_w_master)
+Function boolean pfc_ClientToScreen (longptr al_hwnd, ref blob ablb_point) Library "user32.dll" Alias For "ClientToScreen"
 end prototypes
 
 type variables
@@ -780,7 +782,7 @@ protected function integer of_setposition ();///////////////////////////////////
 //	Returns:  	Integer
 //	1 if it succeeds and -1 if an error occurs.
 //
-//	Description:  	
+//	Description:
 //	Moves this StatusBar window so it is positioned over the lower right
 //	hand portion of the Microhelp bar.
 //
@@ -790,6 +792,9 @@ protected function integer of_setposition ();///////////////////////////////////
 //
 //	Version
 //	5.0   Initial version
+//	2025	Positioned from the frame's client area (GetClientRect and ClientToScreen)
+//			instead of its size less estimated border and title bar sizes, which
+//			were wrong with some themes and Windows versions (#45)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -817,16 +822,50 @@ protected function integer of_setposition ();///////////////////////////////////
 
 long 		ll_microhelp_ypos, ll_frame_xpos, ll_desiredstatubar_xpos
 integer	li_xpos_extra=0, li_ypos_extra=0
+blob{16}	lblb_client
+blob{8}	lblb_point
+long		ll_left, ll_top, ll_right, ll_bottom
 
 // Check window reference.
 If IsNull(iw_parentwindow) Or Not IsValid(iw_parentwindow) Then
 	Return -1
 End If
 
-if iw_parentwindow.windowstate = minimized! then 
+if iw_parentwindow.windowstate = minimized! then
 	return 1
 end if
 
+// The frame's client area, in screen coordinates: the MicroHelp bar is at its
+// bottom.  Windows knows where it is whatever the theme, the border and the title
+// bar, so no adjustments for them are needed (#45).
+If pfc_GetClientRect(Handle(iw_parentwindow), lblb_client) Then
+	// The client rectangle's top left corner is (0, 0); its bottom right corner
+	// is (width, height)
+	If pfc_ClientToScreen(Handle(iw_parentwindow), lblb_point) Then
+		ll_left = PixelsToUnits(Long(BlobMid(lblb_point, 1, 4)), XPixelsToUnits!)
+		ll_top = PixelsToUnits(Long(BlobMid(lblb_point, 5, 4)), YPixelsToUnits!)
+		ll_right = PixelsToUnits(Long(BlobMid(lblb_point, 1, 4)) + Long(BlobMid(lblb_client, 9, 4)), XPixelsToUnits!)
+		ll_bottom = PixelsToUnits(Long(BlobMid(lblb_point, 5, 4)) + Long(BlobMid(lblb_client, 13, 4)), YPixelsToUnits!)
+
+		// Centered in the MicroHelp bar (it is usually less high), at its right end
+		ll_microhelp_ypos = ll_bottom - iw_parentwindow.mdi_1.microhelpheight
+		If this.Height < iw_parentwindow.mdi_1.microhelpheight Then
+			ll_microhelp_ypos += (iw_parentwindow.mdi_1.microhelpheight - this.Height) / 2
+		End If
+		ll_desiredstatubar_xpos = ll_right - (ii_winmaxwidth + 12)
+		If ll_desiredstatubar_xpos < ll_left + 12 Then
+			// The frame is narrower than the Status Bar: as wide as the frame
+			this.move(ll_left + 12, ll_microhelp_ypos)
+			this.width = (ll_right - ll_left) - 24
+		Else
+			this.move(ll_desiredstatubar_xpos, ll_microhelp_ypos)
+			this.width = ii_winmaxwidth
+		End If
+		Return 1
+	End If
+End If
+
+// Without the client area (it can't be read): from the frame's size, as before.
 // Windows 95 has a bigger gap on the hand right side.
 If ib_win95 Then
 	li_xpos_extra = 50
