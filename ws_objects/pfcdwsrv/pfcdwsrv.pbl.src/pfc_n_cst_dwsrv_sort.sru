@@ -56,9 +56,10 @@ public function integer of_getpropertyinfo (ref n_cst_propertyattrib anv_attrib)
 public subroutine of_sortindicatornone ()
 public subroutine of_sortindicatordraw ()
 public function string of_getsort (datawindow vdw_getsort)
-private function integer of_setsort (string as_format, boolean ab_pfcclicked)
+protected function integer of_setsort (string as_format, boolean ab_pfcclicked)
 protected subroutine of_settablesort (string as_format)
-private function integer of_setsortdraw (boolean ab_switch)
+protected function integer of_setsortdraw (boolean ab_switch)
+public function n_cst_dwsrv_sortdraw of_getsortdraw ()
 end prototypes
 
 event type integer pfc_clicked(integer ai_xpos, integer ai_ypos, long al_row, ref dwobject adwo_obj);//////////////////////////////////////////////////////////////////////////////
@@ -1680,7 +1681,7 @@ If ls_sort = "?" Then ls_sort = ""
 Return ls_sort
 end function
 
-private function integer of_setsort (string as_format, boolean ab_pfcclicked);/////////////////////////////////////////////////////////////////////////
+protected function integer of_setsort (string as_format, boolean ab_pfcclicked);/////////////////////////////////////////////////////////////////////////
 //
 //	Function:  		of_SetSort
 //
@@ -1752,11 +1753,11 @@ END IF
 Return(li_RC)
 end function
 
-private function integer of_setsortdraw (boolean ab_switch);/////////////////////////////////////////////////////////////////////////
+protected function integer of_setsortdraw (boolean ab_switch);/////////////////////////////////////////////////////////////////////////
 //
 //	Function:		of_SetSortDraw
 //
-//	Access:			Private
+//	Access:			Protected
 //
 //	Arguments:		boolean			TRUE	- Start (create) the service
 //   										FALSE	- Stop (destroy ) the service
@@ -1774,6 +1775,8 @@ private function integer of_setsortdraw (boolean ab_switch);////////////////////
 //	Revision History
 //
 //	Version:			12.5		Initial version
+//						2025		Protected (it was private), and the sort order indicator
+//									is destroyed when column header sorting is turned off (#46)
 //
 /////////////////////////////////////////////////////////////////////////
 //
@@ -1801,7 +1804,9 @@ private function integer of_setsortdraw (boolean ab_switch);////////////////////
 IF IsNull(ab_switch) THEN Return(FAILURE)
 
 //	Must turn on column header click sorting first
-IF NOT of_getColumnHeader() THEN Return(FAILURE)
+// Only column header sorting has a sort order indicator.  (Turning it off is not
+// checked: of_SetColumnHeader(FALSE) has turned column header sorting off already.)
+IF ab_switch AND NOT of_getColumnHeader() THEN Return(FAILURE)
 
 IF ab_switch THEN
 	IF IsNull(invo_sortDraw) OR NOT IsValid (invo_sortDraw) THEN
@@ -1893,6 +1898,56 @@ CATCH (throwable lt_error)
 	// The criteria stay unknown, as before
 END TRY
 end subroutine
+
+public function n_cst_dwsrv_sortdraw of_getsortdraw ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  		of_GetSortDraw
+//
+//	Access:    		Public
+//
+//	Arguments:		None
+//
+//	Returns:   		n_cst_dwsrv_sortdraw
+//						The sort order indicator service, or an invalid reference when
+//						there is none (it is created by of_SetColumnHeader(TRUE))
+//
+//	Description:  Gives access to the sort order indicator service, for example to
+//					  set its colors and alignment (of_SetColorLinePrimary,
+//					  of_SetAlignment).
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#46)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+Return invo_sortDraw
+end function
 
 on pfc_n_cst_dwsrv_sort.create
 call super::create
