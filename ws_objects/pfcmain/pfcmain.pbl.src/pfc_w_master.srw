@@ -53,6 +53,7 @@ event type integer pfc_updateobjects ( powerobject apo_control[],  boolean ab_ac
 event type integer pfc_updatespendingref ( powerobject apo_control[],  ref powerobject apo_pending[] )
 event pfc_preprint ( )
 event pfc_postprint ( )
+event pfc_getminmaxinfo pbm_getminmaxinfo
 end type
 global pfc_w_master pfc_w_master
 
@@ -60,6 +61,9 @@ type prototypes
 // The window's frame, for of_GetOrigSize (the pfc_ names don't clash with a descendant's)
 Function boolean pfc_GetClientRect (longptr al_hwnd, ref blob ablb_rect) Library "user32.dll" Alias For "GetClientRect"
 Function boolean pfc_GetWindowRect (longptr al_hwnd, ref blob ablb_rect) Library "user32.dll" Alias For "GetWindowRect"
+// The MINMAXINFO structure of WM_GETMINMAXINFO, for pfc_GetMinMaxInfo
+Subroutine pfc_CopyFromMemory (ref blob ablb_destination, longptr al_source, longptr al_length) Library "kernel32.dll" Alias For "RtlMoveMemory"
+Subroutine pfc_CopyToMemory (longptr al_destination, ref blob ablb_source, longptr al_length) Library "kernel32.dll" Alias For "RtlMoveMemory"
 end prototypes
 
 type variables
@@ -1977,6 +1981,86 @@ event pfc_preprint();///////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////////
 
+end event
+
+event pfc_getminmaxinfo;//////////////////////////////////////////////////////////////////////////////
+//
+//	Event:  pfc_GetMinMaxInfo
+//
+//	Arguments:
+//	minmaxinfo	pointer to the MINMAXINFO structure of WM_GETMINMAXINFO
+//
+//	Returns:  long
+//	 0
+//
+//	Description:
+//	Windows asks for the window's minimum and maximum size.  When the resize service
+//	limits the window's size (n_cst_resize.of_SetWindowMinSize), the user can't make
+//	the window smaller than its minimum size (n_cst_resize.of_SetMinSize, a workspace
+//	size, plus the window's frame).
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#47)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+// MINMAXINFO: five POINTs (two LONGs each): ptReserved, ptMaxSize, ptMaxPosition,
+// ptMinTrackSize (bytes 25 to 32) and ptMaxTrackSize
+Constant Long MINMAXINFO_SIZE = 40
+Constant Long MINTRACKSIZE_X = 25
+Constant Long MINTRACKSIZE_Y = 29
+
+blob{40}	lblb_info
+blob{16}	lblb_window, lblb_client
+integer	li_minwidth, li_minheight
+long		ll_minx, ll_miny
+
+If IsNull(minmaxinfo) Or minmaxinfo = 0 Then Return 0
+If Not IsValid(inv_resize) Then Return 0
+If Not inv_resize.of_IsWindowMinSize() Then Return 0
+If inv_resize.of_GetMinSize(li_minwidth, li_minheight) <> 1 Then Return 0
+
+// The minimum workspace plus the frame, in pixels
+If Not pfc_GetWindowRect(Handle(This), lblb_window) Then Return 0
+If Not pfc_GetClientRect(Handle(This), lblb_client) Then Return 0
+ll_minx = UnitsToPixels(li_minwidth, XUnitsToPixels!) + &
+	(Long(BlobMid(lblb_window, 9, 4)) - Long(BlobMid(lblb_window, 1, 4))) - Long(BlobMid(lblb_client, 9, 4))
+ll_miny = UnitsToPixels(li_minheight, YUnitsToPixels!) + &
+	(Long(BlobMid(lblb_window, 13, 4)) - Long(BlobMid(lblb_window, 5, 4))) - Long(BlobMid(lblb_client, 13, 4))
+
+// Raise the minimum tracking size (never lower it below Windows' own)
+pfc_CopyFromMemory(lblb_info, minmaxinfo, MINMAXINFO_SIZE)
+If ll_minx > Long(BlobMid(lblb_info, MINTRACKSIZE_X, 4)) Then BlobEdit(lblb_info, MINTRACKSIZE_X, ll_minx)
+If ll_miny > Long(BlobMid(lblb_info, MINTRACKSIZE_Y, 4)) Then BlobEdit(lblb_info, MINTRACKSIZE_Y, ll_miny)
+pfc_CopyToMemory(minmaxinfo, lblb_info, MINMAXINFO_SIZE)
+
+Return 0
 end event
 
 event pfc_postprint();//////////////////////////////////////////////////////////////////////////////
