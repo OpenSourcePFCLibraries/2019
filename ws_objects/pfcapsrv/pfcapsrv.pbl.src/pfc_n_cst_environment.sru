@@ -51,6 +51,10 @@ FUNCTION ULong    GetComputerName( REF String lpBuffer, REF ULong lpnSize) &
                                  LIBRARY "kernel32.dll" ALIAS FOR "GetComputerNameW"
 FUNCTION Boolean  GetVersionEx( REF osversioninfoex lpOSVersionInfoEx) &
                                  LIBRARY "kernel32.dll" ALIAS FOR "GetVersionExW"
+// RtlGetVersion gives the real version; GetVersionEx gives it only to applications whose
+// manifest declares support for it, and 6.2 (Windows 8) to the others.
+FUNCTION Long     RtlGetVersion( REF osversioninfoex lpVersionInformation) &
+                                 LIBRARY "ntdll.dll"
 FUNCTION Integer  GetSystemMetrics( Integer nIndex) LIBRARY "user32.dll"
 
 // The following API's require Windows XP and above or Windows Server 2003 and above.
@@ -212,6 +216,7 @@ event pfc_osversioninfodecode(osversioninfoex astr_ovix);///////////////////////
 //
 //	Version
 //	12.5  Initial version
+//	2025  Windows 8.1, 10 and 11, and Windows Server 2008 R2 to 2025
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -366,11 +371,11 @@ Choose Case iul_OSMajorVersion
 				// Continue - Default version & edition descriptions may be assigned later.
 		End Choose
 
-	Case 6
-		// Windows v6 supports the API that tells whether or not Wow64 support is available.
+	Case 6, 10
+		// Windows v6 and later support the API that tells whether or not Wow64 support is available.
 		ib_CanWow64BeChecked = True
 		
-		// Use an API newly-available in Windows v6 to determine the edition description
+		// Use an API available since Windows v6 to determine the edition description
 		// of the OS from an alternative product information code. The possible return value
 		// FAILURE (-1) will not occur because the minimum required OS version is v6.
 		li_RC = This.EVENT pfc_OSProductInfoDecode()
@@ -391,37 +396,70 @@ Choose Case iul_OSMajorVersion
 			lui_OSProductType = iui_OSProductType
 		End If
 		
+		// Windows 10 and 11, and Windows Server 2016 and later, are all version 10.0;
+		// the build number tells them apart.
+		If iul_OSMajorVersion = 10 Then
+			If lui_OSProductType = VER_NT_WORKSTATION Then
+				If iul_OSBuildNumber >= 22000 Then
+					is_OSVersionDesc = 'Windows 11'
+				Else
+					is_OSVersionDesc = 'Windows 10'
+				End If
+			Else
+				Choose Case iul_OSBuildNumber
+					Case Is >= 26100
+						is_OSVersionDesc = 'Windows Server 2025'
+					Case Is >= 20348
+						is_OSVersionDesc = 'Windows Server 2022'
+					Case Is >= 17763
+						is_OSVersionDesc = 'Windows Server 2019'
+					Case Else
+						is_OSVersionDesc = 'Windows Server 2016'
+				End Choose
+			End If
+		End If
+		
 		// What flavor of Windows v6 is this?
-		Choose Case iul_OSMinorVersion
+		If iul_OSMajorVersion = 6 Then
+			Choose Case iul_OSMinorVersion
+					
+				Case 0	// v6.0
+					Choose Case lui_OSProductType
+						Case VER_NT_WORKSTATION
+							is_OSVersionDesc = 'Windows Vista'
+						Case Else
+							is_OSVersionDesc = 'Windows Server 2008'
+					End Choose
 				
-			Case 0	// v6.0
-				Choose Case lui_OSProductType
-					Case VER_NT_WORKSTATION
-						is_OSVersionDesc = 'Windows Vista'
-					Case Else
-						is_OSVersionDesc = 'Windows Server 2008'
-				End Choose
-			
-			Case 1	// v6.1
-				Choose Case lui_OSProductType
-					Case VER_NT_WORKSTATION
-						is_OSVersionDesc = 'Windows 7'
-					Case Else
-						is_OSVersionDesc = 'Windows Server 2008'
-				End Choose
-			
-			Case 2	// v6.2
-				Choose Case lui_OSProductType
-					Case VER_NT_WORKSTATION
-						is_OSVersionDesc = 'Windows 8'
-					Case Else
-						is_OSVersionDesc = 'Windows Server 2012'
-				End Choose
+				Case 1	// v6.1
+					Choose Case lui_OSProductType
+						Case VER_NT_WORKSTATION
+							is_OSVersionDesc = 'Windows 7'
+						Case Else
+							is_OSVersionDesc = 'Windows Server 2008 R2'
+					End Choose
 				
-			Case Else
-				// Continue - Default version & edition descriptions may be assigned shortly.
+				Case 2	// v6.2
+					Choose Case lui_OSProductType
+						Case VER_NT_WORKSTATION
+							is_OSVersionDesc = 'Windows 8'
+						Case Else
+							is_OSVersionDesc = 'Windows Server 2012'
+					End Choose
 				
-		End Choose
+				Case 3	// v6.3
+					Choose Case lui_OSProductType
+						Case VER_NT_WORKSTATION
+							is_OSVersionDesc = 'Windows 8.1'
+						Case Else
+							is_OSVersionDesc = 'Windows Server 2012 R2'
+					End Choose
+					
+				Case Else
+					// Continue - Default version & edition descriptions may be assigned shortly.
+					
+			End Choose
+		End If
 	
 	Case Else
 		// Continue - Default version & edition descriptions may be assigned shortly.
@@ -1057,6 +1095,7 @@ protected function integer of_getosinfo ();/////////////////////////////////////
 //
 //	Version
 //	12.5  Initial version
+//	2025  The version from RtlGetVersion, which isn't limited by the manifest
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1114,7 +1153,10 @@ End If
 
 // Obtain information about the OS via a Windows API call.
 lstr_ovix.ul_dwOSVersionInfoSize = OSVERSIONINFOEX_STRUCTURE_SIZE_UNICODE
-lb_SystemInfoIsOK = GetVersionEx(lstr_ovix)	// RC=0 if GetVersionEx fails.
+// RtlGetVersion returns 0 (STATUS_SUCCESS) when it succeeds; GetVersionEx returns False
+// when it fails.
+lb_SystemInfoIsOK = (RtlGetVersion(lstr_ovix) = 0)
+If Not lb_SystemInfoIsOK Then lb_SystemInfoIsOK = GetVersionEx(lstr_ovix)
 If Not lb_SystemInfoIsOK Then Return FAILURE
 
 // Decode the OS version information.
