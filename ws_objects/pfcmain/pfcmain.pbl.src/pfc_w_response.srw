@@ -32,11 +32,116 @@ Protected:
 	Boolean		#CloseBox						= TRUE
 	Boolean		#Resizable						= FALSE
 
+	// TRUE to make the window larger at open, if its work area is too small for
+	// its controls (see of_FitWorkSpace)
+	Boolean		ib_FitWorkSpace					= TRUE
+
 Private:
 
 	n_cst_platForm				invo_platForm
 	n_cst_platFormAttrib		invo_constants
 end variables
+
+forward prototypes
+protected function integer of_fitworkspace ()
+end prototypes
+
+protected function integer of_fitworkspace ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:		of_FitWorkSpace
+//
+//	Access:			Protected
+//
+//	Arguments:		None
+//
+//	Returns:			Integer
+//						 1 = the window was made larger
+//						 0 = the controls fit, or ib_FitWorkSpace is FALSE
+//
+//	Description:	Makes the window larger, if necessary, so that its work area holds its
+//						visible controls (not the drawing objects), with as much room on the
+//						right and at the bottom as on the left and at the top (up to 64 units,
+//						at least 18).  The window is never made smaller.
+//
+//						PowerBuilder gives a window the work area of its design (WorkSpaceWidth
+//						and WorkSpaceHeight before it is resized), with today's larger frame
+//						around it, but a size set with Resize includes the frame.  A window
+//						that is resized at open has to allow for that (see pfc_w_restorerow).
+//
+//						Called from pfc_preopen, before the descendant's open script, so a
+//						dialog that sizes itself still does.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+// Open Source PowerBuilder Foundation Class Libraries
+//
+// Copyright (c) 2004-2017, All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted in accordance with the MIT License
+//
+// https://opensource.org/licenses/MIT
+//
+// This software consists of voluntary contributions made by many
+// individuals and was originally based on software copyright (c)
+// 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+// information on the Open Source PowerBuilder Foundation Class
+// Libraries see https://github.com/OpenSourcePFCLibraries
+//
+//////////////////////////////////////////////////////////////////////////////
+
+integer	li_i, li_count
+long		ll_left = 32767, ll_top = 32767, ll_right, ll_bottom, ll_controlbottom
+long		ll_needwidth, ll_needheight
+dragobject	ldo_control
+
+If Not ib_FitWorkSpace Then Return 0
+
+// The extent of the visible controls
+li_count = UpperBound(this.Control)
+For li_i = 1 To li_count
+	If IsNull(this.Control[li_i]) Or Not IsValid(this.Control[li_i]) Then Continue
+	Choose Case this.Control[li_i].TypeOf()
+		Case Line!, Oval!, Rectangle!, RoundRectangle!
+			// Drawing objects (a line has no position or size of its own)
+			Continue
+	End Choose
+	ldo_control = this.Control[li_i]
+	If Not ldo_control.Visible Then Continue
+	Choose Case ldo_control.TypeOf()
+		Case DropDownListBox!, DropDownPictureListBox!
+			// The height includes the list that drops down
+			ll_controlbottom = ldo_control.Y + 100
+		Case Else
+			ll_controlbottom = ldo_control.Y + ldo_control.Height
+	End Choose
+	ll_left = Min(ll_left, ldo_control.X)
+	ll_top = Min(ll_top, ldo_control.Y)
+	ll_right = Max(ll_right, ldo_control.X + ldo_control.Width)
+	ll_bottom = Max(ll_bottom, ll_controlbottom)
+Next
+If ll_right = 0 Then Return 0
+
+// The work area the window needs, and the one it has
+ll_needwidth = ll_right + Max(18, Min(64, ll_left))
+ll_needheight = ll_bottom + Max(18, Min(64, ll_top))
+If ll_needwidth <= this.WorkSpaceWidth() And ll_needheight <= this.WorkSpaceHeight() Then Return 0
+ll_needwidth = Max(ll_needwidth, this.WorkSpaceWidth())
+ll_needheight = Max(ll_needheight, this.WorkSpaceHeight())
+
+// Resize sets the size of the whole window, and the size of its frame is only known
+// once the window has been resized
+this.Resize(this.Width + 1, this.Height + 1)
+this.Resize(ll_needwidth + (this.Width - this.WorkSpaceWidth()), ll_needheight + (this.Height - this.WorkSpaceHeight()))
+Return 1
+end function
 
 event pfc_cancel;call w_master::pfc_cancel;//////////////////////////////////////////////////////////////////////////////
 //
@@ -175,6 +280,8 @@ event pfc_preopen;call super::pfc_preopen;//////////////////////////////////////
 //						12.5				Adjust size of window when resizable is
 //											set to true.  Border is thicker for
 //											resizable windows.
+//						2025				Make the work area big enough for the
+//											controls (of_FitWorkSpace).
 /////////////////////////////////////////////////////////////////////////
 //
 // Open Source PowerBuilder Foundation Class Libraries
@@ -280,6 +387,9 @@ IF NOT controlMenu THEN
 	DESTROY lnvo_style
 
 END IF
+
+// Make the work area big enough for the controls, before the descendant's open script
+of_FitWorkSpace()
 end event
 
 event close;call super::close;/////////////////////////////////////////////////////////////////////////
