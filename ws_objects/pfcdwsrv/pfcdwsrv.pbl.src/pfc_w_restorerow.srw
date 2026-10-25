@@ -35,10 +35,10 @@ global pfc_w_restorerow pfc_w_restorerow
 
 type variables
 Protected:
-integer	ii_dwmaxwidth = 1451
-integer	ii_dwmaxheight = 1168
+integer	ii_dwmaxwidth = 2600
+integer	ii_dwmaxheight = 1400
 integer	ii_dwminwidth = 729
-integer	ii_dwminheight = 564
+integer	ii_dwminheight = 572
 n_cst_restorerowattrib inv_restorerowattrib 
 n_cst_returnattrib 	inv_return
 datawindow idw_parm
@@ -57,6 +57,7 @@ event open;call super::open;////////////////////////////////////////////////////
 //
 //	Version
 //	6.0   Initial version
+//	2025  Make the work area big enough for the controls, and allow a wider list
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -86,6 +87,7 @@ long	ll_rowcount
 long	ll_width
 long	ll_height
 long	 ll_loop
+integer	li_pass
 string ls_rownumbertype
 long	ll_rownumbers[]
 
@@ -147,6 +149,15 @@ End If
 
 // Prevent rows from starting highlighted.
 dw_delete.SelectRow (0, False)
+
+// The window's size includes its frame, which is larger now than when the window was
+// laid out: make the work area big enough for the controls before the resize service
+// registers them.  The frame's size is only known once the window has been resized,
+// so this is done twice.
+For li_pass = 1 To 2
+	this.Resize(this.Width + (cb_ok.X + cb_ok.Width + dw_delete.X - this.WorkSpaceWidth()), &
+		this.Height + (Max(dw_delete.Y + dw_delete.Height, cb_dlghelp.Y + cb_dlghelp.Height) + dw_delete.Y - this.WorkSpaceHeight()))
+Next
 
 // Register controls for resize window service
 of_SetResize (true)
