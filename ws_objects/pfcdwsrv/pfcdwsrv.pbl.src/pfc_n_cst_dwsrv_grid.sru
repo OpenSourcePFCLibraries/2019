@@ -442,6 +442,7 @@ public function integer of_save ();/////////////////////////////////////////////
 //
 // Version
 //	12.5		Initial Version
+//	2025		Saved at user level when the application keeps user preferences (#89)
 //////////////////////////////////////////////////////////////////////////////
 
 string	ls_key
@@ -458,7 +459,10 @@ ls_key 		= classname( lw_parent)
 ls_subkey 	= classname(idw_requestor)
 ls_value		= this.of_Getlayoutdata( )
 
-// 3. Save actual layout through the Application Preference Service
+// 3. Save actual layout through the Application Preference Service: at user level when
+//    the application keeps user preferences (a user key or INI file), else at
+//    application level
+if inv_apppref.of_save( "gridlayout." + ls_key + "." + ls_subkey, ls_value, false ) = success then return success
 return inv_apppref.of_save( ls_key, ls_subkey, ls_value )
 
 end function
@@ -484,6 +488,7 @@ public function integer of_load ();/////////////////////////////////////////////
 //
 // Version
 //		12.5		Initial version
+//		2025		The user's layout first, when the application keeps user preferences (#89)
 //////////////////////////////////////////////////////////////////////////////
 
 integer	li_rc
@@ -500,11 +505,16 @@ if idw_requestor.of_getparentwindow( lw_parent ) = failure then return failure
 // 2.Keep a copy of the original layout of the requrestor DW
 of_populate( )
 
-// 3.Get Last saved layout data using the actual settings of the Application Preference Service
+// 3.Get Last saved layout data using the actual settings of the Application Preference Service:
+//   the user's layout if the application keeps user preferences and there is one, else
+//   the application's (see of_Save)
 setnull(ls_null)
 ls_key 		= classname( lw_parent)
 ls_subkey 	= classname(idw_requestor)
-li_rc 			=  inv_apppref.of_restore( ls_key, ls_subkey, ls_value, ls_null)
+li_rc 			=  inv_apppref.of_restore( "gridlayout." + ls_key + "." + ls_subkey, ls_value, ls_null, false )
+if li_rc <> success or isnull( ls_value ) or ls_value = "" then
+	li_rc 		=  inv_apppref.of_restore( ls_key, ls_subkey, ls_value, ls_null)
+end if
 
 // 3.1 Retrun failure if anything goes wrong during the reading of the data
 if li_rc <> success then return failure
