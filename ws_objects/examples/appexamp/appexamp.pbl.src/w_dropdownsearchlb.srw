@@ -91,16 +91,17 @@ SetPointer(hourglass!)
 // If the SQLSpy Window is open, pass it the proposed embedded sql statement.
 if IsValid(gnv_app.inv_debug) then
 	if IsValid(gnv_app.inv_debug.inv_sqlspy) then
-		ls_sql = "SELECT 'states'.'state_name'~r~nFROM 'states'~r~n"+&
-			"WHERE 'states'.'country' = 'USA'   ;"
+		ls_sql = "SELECT state_name~r~nFROM states~r~n"+&
+			"WHERE country = 'USA'   ;"
 		gnv_app.inv_debug.inv_sqlspy.of_SQLSyntax("Get US State Names", ls_sql)
 	end if
 end if
 
+// Plain names: SQL Server reads names in double quotes as strings, unless QUOTED_IDENTIFIER is on
 DECLARE sqlcursor CURSOR FOR  
-SELECT "states"."state_name"  
-FROM "states"
-WHERE "states"."country" = 'USA';
+SELECT state_name
+FROM states
+WHERE country = 'USA';
 	
 open sqlcursor;
 if sqlca.sqlcode < 0 then
