@@ -35,8 +35,7 @@ of_SetVersion ("Version " + String ( li_major ) + "." + String ( li_minor ) + ".
 // The application bitmap name
 of_SetLogo ("key.bmp")
 
-// The application bitmap name
-of_SetHelpFile ( "pbpfc110.chm")
+// No help file: Help > Help Topics opens the PFC documentation (see m_pfcsecurity_master)
 
 
 // The application's copyright message
