@@ -84,7 +84,15 @@ end event
 type m_scanapplication from menu within m_file
 end type
 
-event clicked;run('pfcsecsc.exe')
+event clicked;// The scanner uses the administrator's security database: pass it the INI
+string	ls_ini
+
+ls_ini = gnv_app.of_GetAppIniFile()
+If Mid(ls_ini, 2, 1) <> ":" And Left(ls_ini, 2) <> "\\" Then ls_ini = GetCurrentDirectory() + "\" + ls_ini
+
+If Run('pfcsecsc.exe /ini "' + ls_ini + '"') = -1 Then
+	MessageBox(gnv_app.iapp_object.DisplayName, "Unable to run the security scanner, pfcsecsc.exe.", StopSign!)
+End If
 end event
 
 on m_scanapplication.create
