@@ -48,141 +48,31 @@ end type
 global w_pfcsecurity_targetselection w_pfcsecurity_targetselection
 
 type variables
-pfcscanner_n_cst_filesrv inv_file
+pfcscanner_n_cst_target inv_target
 
-string is_appname, is_applib, is_libs[]
+string is_appname, is_libs[]
 end variables
 
 forward prototypes
-public function string f_buildpath (string as_drive, string as_dirarray[], string as_libin)
-public function integer f_getliblist (ref string as_appname, ref string as_applib, ref string as_liblist[])
+public function integer wf_opentarget (string as_file)
 end prototypes
 
-public function string f_buildpath (string as_drive, string as_dirarray[], string as_libin);//*-------------------------------------------------------------------
-//*  Function:			f_BuildPath
-//*  Purpose:			Convert the relative path ( ie: ..\\..\\temp.my.pbl )
-//*						to a absolute path based on the target folders 
+public function integer wf_opentarget (string as_file);//*-------------------------------------------------------------------
+//*  Function:			wf_OpenTarget
+//*  Purpose:			Read the application and its libraries from a target (.pbt)
 //*-------------------------------------------------------------------
-string ls_drive, ls_tempdir, ls_file, ls_sep, ls_library, ls_dir
-long ll_pos, ll_cnt, ll_d, ll_dirs
-pfcscanner_n_cst_string lnv_string
+integer li_count
 
-ls_sep = "\\"
-
-/*  Parse the relative path  */
-inv_file.of_ParsePath ( as_libin, ls_drive, ls_tempdir, ls_file ) 
-If ls_drive > "" Then 
-	/*  If there is a drive, then it is not a relative path  */
-	ls_library = lnv_string.of_GlobalReplace ( as_libin, ls_sep, "\", True )
-	Return ls_library
+li_count = inv_target.of_Open ( Trim ( as_file ), is_appname, is_libs )
+If li_count <= 0 Or is_appname = "" Then
+	mle_1.f_ClearAll ( )
+	cb_ok.Enabled = False
+	MessageBox ( this.Title, "Unable to read the application and its libraries from " + as_file + "." )
+	Return -1
 End If
 
-/*  Find the ".." to determine the level of folders  */
-ll_pos = Pos ( as_libin, ".." + ls_sep ) 
-Do While ll_pos = 1
-	ll_cnt++
-	as_libin = Mid ( as_libin, ll_pos + 4 ) 
-	ll_pos = Pos ( as_libin, ".." + ls_sep ) 
-Loop
-
-/*  Now adjust the folder count by the number of ".." found  */
-ll_dirs = UpperBound ( as_dirarray )
-ll_dirs = ll_dirs - ll_cnt
-
-/*  Build the folder path */
-For ll_d =1 to ll_dirs
-	ls_dir = ls_dir + as_dirarray[ll_d] + "\"
-Next
-
-/*  Reconstruct the library path  */
-ls_library = inv_file.of_AssemblePath ( as_drive, ls_dir, as_libin ) 
-ls_library = lnv_string.of_GlobalReplace ( ls_library, ls_sep, "\", True )
-
-Return ls_library
-end function
-
-public function integer f_getliblist (ref string as_appname, ref string as_applib, ref string as_liblist[]);//*-------------------------------------------------------------------
-//*  Function:			f_GetLibList
-//*  Purpose:			Get the library information from the target file
-//*-------------------------------------------------------------------
-string ls_drive, ls_dir, ls_file, ls_dirs[]
-string ls_line, ls_liblist
-long ll_FileNo, ll_rc, ll_l, ll_libs
-long ll_pos, ll_pos2, ll_pos3
-pfcscanner_n_cst_string lnv_string
-
-f_SetFileSrv ( inv_file, True )
-
-/* Open the target for read  */
-ll_FileNo = FileOpen ( sle_targetfile.Text, LineMode!, Read! )
-If ll_FileNo < 0 Then Return -1
-
-/*  Read the target file extracting information  */
-ll_rc = FileRead ( ll_FileNo, ls_line ) 
-Do While ll_rc > 0 
-	/*  Look for appname  */
-	ll_pos = Pos ( Lower ( ls_line ), "appname" )
-	If ll_pos = 1 Then
-		ll_pos2 = Pos ( ls_line, "~"" ) 
-		If ll_pos2 > 0 Then
-			ls_line = Mid ( ls_line, ll_pos2 + 1 )
-			ll_pos3 = Pos ( ls_line, "~"" ) 
-			If ll_pos3 > 0 Then 
-				as_appname = Left ( ls_line, ll_pos3 - 1 )
-			End If
-		End If
-		ll_rc = FileRead (ll_FileNo, ls_line ) 
-		Continue
-	End If
-	/*  Look for applib  */
-	ll_pos = Pos ( Lower ( ls_line ), "applib" )
-	If ll_pos = 1 Then
-		ll_pos2 = Pos ( ls_line, "~"" ) 
-		If ll_pos2 > 0 Then
-			ls_line = Mid ( ls_line, ll_pos2 + 1 )
-			ll_pos3 = Pos ( ls_line, "~"" ) 
-			If ll_pos3 > 0 Then 
-				as_applib = Left ( ls_line, ll_pos3 - 1 )
-			End If
-		End If
-		ll_rc = FileRead ( ll_FileNo, ls_line ) 
-		Continue
-	End If
-	/*  Look for liblist */
-	ll_pos = Pos ( Lower ( ls_line ), "liblist" )
-	If ll_pos = 1 Then
-		ll_pos2 = Pos ( ls_line, "~"" ) 
-		If ll_pos2 > 0 Then
-			ls_line = Mid ( ls_line, ll_pos2 + 1 )
-			ll_pos3 = Pos ( ls_line, "~"" ) 
-			If ll_pos3 > 0 Then 
-				ls_liblist = Left ( ls_line, ll_pos3 - 1 )
-			End If
-		End If
-		ll_rc = FileRead ( ll_FileNo, ls_line ) 
-		Continue
-	End If
-	ll_rc = FileRead (ll_FileNo, ls_line ) 
-Loop
-
-FileClose ( ll_FileNo)
-
-/*  Parse the library list to an array */
-ll_libs = lnv_string.of_ParseToArray ( ls_liblist, ";", as_liblist )
-
-/*  Get the path of the target file and create an array of its folders  */
-inv_file.of_ParsePath ( sle_targetfile.Text, ls_drive, ls_dir, ls_file )
-lnv_string.of_ParseToArray ( ls_dir, "\", ls_dirs )
-
-/*  Parse the relative path to a full path  */
-as_applib = f_BuildPath ( ls_drive, ls_dirs, as_applib ) 
-
-/*  For each of the libraries, Parse the relative path to a full path  */
-For ll_l = 1 to ll_libs
-	as_liblist[ll_l] = f_BuildPath ( ls_drive, ls_dirs, as_liblist[ll_l] ) 
-Next
-
-f_SetFileSrv ( inv_file, False )
+mle_1.f_Populate ( is_libs )
+cb_ok.Enabled = True
 
 Return 1
 end function
@@ -220,6 +110,21 @@ destroy(this.cb_select)
 destroy(this.cb_exit)
 end on
 
+event open;string ls_target
+
+inv_target = Create pfcscanner_n_cst_target
+
+// the target given on the command line
+ls_target = Message.StringParm
+If Trim(ls_target) = "" Then Return
+
+sle_targetfile.Text = inv_target.of_FullPath(GetCurrentDirectory(), ls_target)
+wf_OpenTarget(sle_targetfile.Text)
+end event
+
+event close;If IsValid ( inv_target ) Then Destroy inv_target
+end event
+
 type st_liblist from statictext within w_pfcsecurity_targetselection
 integer x = 32
 integer y = 332
@@ -233,7 +138,7 @@ fontfamily fontfamily = swiss!
 string facename = "MS Sans Serif"
 long textcolor = 33554432
 long backcolor = 67108864
-string text = "Adjust Library &Search Path, if necessary:"
+string text = "&Libraries, from the target:"
 boolean focusrectangle = false
 end type
 
@@ -250,7 +155,7 @@ fontfamily fontfamily = swiss!
 string facename = "MS Sans Serif"
 long textcolor = 33554432
 long backcolor = 67108864
-string text = "Browse for a &target file containing the application you wish to scan."
+string text = "Browse for the &target to scan:"
 boolean focusrectangle = false
 end type
 
@@ -364,9 +269,9 @@ string ls_filename, ls_file
 int li_rc
 
 ls_filename = sle_targetfile.Text
-li_rc = GetFileOpenName ( "Select Target File", &
+li_rc = GetFileOpenName ( "Select Target", &
 			ls_filename, ls_file, "pbt", &
-			"PowerBuilder Target (*.pbt),*.pbt" )
+			"PowerBuilder Targets (*.pbt),*.pbt" )
 
 If li_rc = 1 Then
 	sle_targetfile.Text = ls_filename
@@ -390,17 +295,11 @@ long textcolor = 33554432
 borderstyle borderstyle = stylelowered!
 end type
 
-event modified;long ll_l, ll_libs
-
-f_GetLibList ( is_appname, is_applib, is_libs[] )
-
-mle_1.f_Populate ( is_libs ) 
-
-If Trim( this.Text ) = "" Then 
+event modified;If Trim( this.Text ) = "" Then
 	mle_1.f_clearAll()
 	cb_ok.Enabled = False
 Else
-	cb_ok.Enabled = True
+	wf_OpenTarget ( this.Text )
 End If
 end event
 
