@@ -115,6 +115,10 @@ Integer li_rc
 li_rc = of_GetSystemSettings() 
 
 // Refresh the colors of all the objects.
+// (the application's, the theme's or the new system colors, through the service)
+If IsValid(iw_parentwindow) Then
+	If IsValid(iw_parentwindow.inv_statusbar) Then li_rc = iw_parentwindow.inv_statusbar.of_RefreshThemeColors()
+End If
 li_rc = of_RefreshColors()
 
 // Force a resize on the Frame to enforce the correct position of this window.
@@ -1431,6 +1435,9 @@ graphicobject lgo_withfocus
 If IsNull(iw_parentwindow) Or Not IsValid(iw_parentwindow) Then
 	Return
 End If
+
+// Follow a theme applied with ApplyTheme anywhere (PowerBuilder has no event for it)
+If IsValid(iw_parentwindow.inv_statusbar) Then iw_parentwindow.inv_statusbar.of_CheckTheme()
 
 // Refresh the displayed objects.
 li_rc = of_RefreshVisuals()

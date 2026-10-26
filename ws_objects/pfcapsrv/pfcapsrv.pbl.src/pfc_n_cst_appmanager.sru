@@ -43,6 +43,8 @@ string	is_version
 string	is_logo
 string	is_userid
 string	is_copyright
+// The folder of the theme applied with of_ApplyTheme
+string	is_themepath
 w_frame	iw_frame
 end variables
 forward prototypes
@@ -79,6 +81,8 @@ public function integer of_settrregistration (boolean ab_switch)
 public function integer of_setsecurity (boolean ab_switch)
 public function integer of_setapppreference (boolean ab_switch)
 public function integer of_setmru (boolean ab_switch)
+public function integer of_applytheme (string as_themepath)
+public function string of_getthemepath ()
 end prototypes
 
 event pfc_open;//////////////////////////////////////////////////////////////////////////////
@@ -1550,6 +1554,109 @@ End If
 
 is_helpfile = as_helpfile
 Return 1
+end function
+
+public function integer of_applytheme (string as_themepath);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_ApplyTheme
+//
+//	Access:  public
+//
+//	Arguments:
+//	as_themepath:  The full path of the theme's folder, or "" to remove the theme
+//
+//	Returns:  Integer
+//	 1 = success
+//	-1 = error (ApplyTheme failed)
+//
+//	Description:  Applies a UI theme with ApplyTheme, remembers its folder
+//		(of_GetThemePath), and tells the frame's status bar, which UI themes don't
+//		style, to take its colors from the theme.  A theme applied with ApplyTheme
+//		directly reaches the status bar too, at its next refresh.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+If IsNull(as_themepath) Then Return -1
+If ApplyTheme(as_themepath) <> 1 Then Return -1
+is_themepath = as_themepath
+
+If IsValid(iw_frame) Then
+	If IsValid(iw_frame.inv_statusbar) Then iw_frame.inv_statusbar.of_RefreshThemeColors()
+End If
+Return 1
+end function
+
+public function string of_getthemepath ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_GetThemePath
+//
+//	Access:  public
+//
+//	Arguments:  None
+//
+//	Returns:  String
+//	The folder of the theme applied with of_ApplyTheme, or "" if none was
+//
+//	Description:  GetTheme gives only the name of the current theme; services that
+//		read the theme's files (the status bar) use this to find them.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+Return is_themepath
 end function
 
 public function integer of_setappkey (string as_appkey);//////////////////////////////////////////////////////////////////////////////
