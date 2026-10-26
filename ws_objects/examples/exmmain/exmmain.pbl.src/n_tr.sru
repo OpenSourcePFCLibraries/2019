@@ -22,15 +22,18 @@ public function long of_begin ();///////////////////////////////////////////////
 //
 //	Returns:  long
 //
-//	Description:  Begin a transaction
-//
-//	Note:  Logs the beginning of the transaction with the SQL Spy.
+//	Description:  Begin a transaction.  With AutoCommit off, the database interface
+//		already has one open (it starts the next one at each COMMIT or ROLLBACK), so
+//		there is nothing to do: a Begin Transaction would start a nested transaction,
+//		and the COMMIT that ends the logical unit of work would not commit it.
+//		With AutoCommit on, Begin Transaction starts one.
 //
 //////////////////////////////////////////////////////////////////////////////
 
 long ll_rc
 
-// If the SQLSpy Window is open, mark the beginning of the transaction.
+If Not this.AutoCommit Then Return 1
+
 ll_rc = of_Execute("Begin Transaction")
 If ll_rc = 0 Then
 	Return 1
