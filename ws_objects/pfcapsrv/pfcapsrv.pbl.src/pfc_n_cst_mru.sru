@@ -364,6 +364,8 @@ if li_rc < 1 then return -1
 
 // turn on the divider bar
 lm_menu.visible = True
+// put back any security restrictions on it
+if IsValid(gnv_app.inv_security) then gnv_app.inv_security.of_ApplyRestrictions(aw_window, lm_menu)
 
 return 1
 
@@ -2243,6 +2245,8 @@ if li_rc < 1 then return -1
 
 lm_menu.text = as_menuitemtext
 lm_menu.visible = True
+// put back any security restrictions on the item
+if IsValid(gnv_app.inv_security) then gnv_app.inv_security.of_ApplyRestrictions(aw_window, lm_menu)
 
 return 1
 

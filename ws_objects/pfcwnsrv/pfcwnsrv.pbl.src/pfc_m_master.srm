@@ -2204,6 +2204,15 @@ else
 	this.m_undoarrange.enabled = false
 end if
 
+// The code above enables items; put back any security restrictions on them
+if IsValid (gnv_app.inv_security) then
+	if IsValid (this.ParentWindow) then
+		gnv_app.inv_security.of_ApplyRestrictions (this.ParentWindow, this)
+	else
+		gnv_app.inv_security.of_ApplyRestrictions (lw_frame, this)
+	end if
+end if
+
 end event
 
 type m_cascade from menu within m_window
