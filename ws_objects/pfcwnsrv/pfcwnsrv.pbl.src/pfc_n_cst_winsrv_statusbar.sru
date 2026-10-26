@@ -77,10 +77,12 @@ integer		ii_barstarty
 long		il_barfillcolor = 10789024	// med gray
 long		il_bartextcolor = 0 		//black
 
-// Status bar colors set by the application; -1 = not set: pfc_w_statusbar uses the
-// system ButtonFace color (no color when a theme is applied) and the Window Text color
+// Status bar colors set by the application; -1 = not set: the status bar takes the
+// theme's colors, or the system ButtonFace and Window Text colors (of_GetColors)
 long il_backgroundcolor = -1
 long il_textcolor = -1
+// The theme the colors were taken from (of_CheckTheme)
+string is_theme
 
 w_statusbar	iw_statusbar
 //	7.0   Instance variable datatype changed from os_dwobjects to n_cst_winsrv_statusbarattrib type
@@ -174,6 +176,13 @@ public function integer of_setmemthreshold (longlong all_threshold)
 public function integer of_setmemthreshold (long al_threshold)
 public function integer of_settextcolor (long al_textcolor)
 public function integer of_setbackgroundcolor (long al_backgroundcolor)
+public function integer of_getthemecolors (string as_themefile, ref long al_background, ref long al_text)
+public function string of_getthemefile ()
+public function integer of_getcolors (ref long al_background, ref long al_text)
+public function integer of_refreshthemecolors ()
+public function integer of_checktheme ()
+protected function long of_hexcolor (string as_color)
+protected function long of_systembuttonface ()
 end prototypes
 
 event pfc_resize;call super::pfc_resize;//////////////////////////////////////////////////////////////////////////////
@@ -594,13 +603,8 @@ If ab_switch Then
 	// Open the status bar window.
 	li_rc = Open(iw_statusbar, iw_requestor)
 	
-	// Apply the colors the application set (otherwise the window keeps its own)
-	// and refresh the status bar display
-	If IsValid(iw_statusbar) Then
-		If il_backgroundcolor >= 0 Then iw_statusbar.of_SetBackgroundColor(il_backgroundcolor)
-		If il_textcolor >= 0 Then iw_statusbar.of_SetTextColor(il_textcolor)
-		iw_statusbar.of_RefreshColors()
-	End If
+	// The colors: the application's, the theme's or the system's (of_GetColors)
+	of_RefreshThemeColors()
 	
 	// Restore the focus to the previous object.
 	of_RestoreFocusPoint(lgo_withfocus)
@@ -5099,10 +5103,9 @@ public function integer of_settextcolor (long al_textcolor);////////////////////
 //	Returns:  Integer
 //	 1 if it succeeds, -1 if the color is not valid
 //
-//	Description:  Sets the color of the status bar text.  Without it, the text uses the
-//		Window Text color.  The status bar is drawn by a DataWindow created at run time,
-//		which UI themes don't style, so set the color of a themed status bar here.  The
-//		progress bar text has its own color (of_SetBarTextColor).
+//	Description:  Sets the color of the status bar text.  Without it, the text has the
+//		color of the theme's status bar (of_GetThemeColors), or the Window Text color.
+//		The progress bar text has its own color (of_SetBarTextColor).
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -5164,11 +5167,8 @@ public function integer of_setbackgroundcolor (long al_backgroundcolor);////////
 //	 1 if it succeeds, -1 if the color is not valid
 //
 //	Description:  Sets the background color of the status bar.  Without it, the status
-//		bar uses the system ButtonFace color, or no color of its own when a UI theme is
-//		applied.  The status bar is drawn by a DataWindow created at run time, which UI
-//		themes don't style: for a themed application, set the color of the theme's status
-//		bar here, and the same background color for w_statusbar.dw_statusbar in the theme
-//		file.
+//		bar has the background color of the theme's status bar (of_GetThemeColors), or
+//		the system ButtonFace color.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -5215,6 +5215,445 @@ If IsValid(iw_statusbar) Then
 End If
 
 Return li_rc
+end function
+
+public function integer of_getthemecolors (string as_themefile, ref long al_background, ref long al_text);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_GetThemeColors
+//
+//	Access:  public
+//
+//	Arguments:
+//	as_themefile	A theme's theme.json
+//	al_background	The theme's status bar background color (passed by reference); -1
+//						if the theme doesn't set it
+//	al_text			The theme's status bar text color (passed by reference); -1 if the
+//						theme doesn't set it
+//
+//	Returns:  Integer
+//	 1 if the file was read, -1 if it can't be read
+//
+//	Description:  Reads the status bar colors of a theme: the statusbar entry of its
+//		window section, as for the MDI frame's status bar ("background-color", and
+//		"color" in "text-font").  The colors are written #RRGGBB.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+JSONParser	lnv_json
+long		ll_window, ll_statusbar, ll_font
+string	ls_error
+integer	li_rc = 1
+
+al_background = -1
+al_text = -1
+If IsNull(as_themefile) Then Return -1
+If Not FileExists(as_themefile) Then Return -1
+
+lnv_json = Create JSONParser
+ls_error = lnv_json.LoadFile(as_themefile)
+If Len(ls_error) > 0 Then
+	li_rc = -1
+Else
+	// A missing entry is an error for JSONParser; it only means the theme has no color
+	Try
+		ll_window = lnv_json.GetItemObject(lnv_json.GetRootItem(), "window")
+		ll_statusbar = lnv_json.GetItemObject(ll_window, "statusbar")
+		al_background = of_HexColor(lnv_json.GetItemString(ll_statusbar, "background-color"))
+		ll_font = lnv_json.GetItemObject(ll_statusbar, "text-font")
+		al_text = of_HexColor(lnv_json.GetItemString(ll_font, "color"))
+	Catch (Throwable lth_missing)
+	End Try
+End If
+Destroy lnv_json
+Return li_rc
+end function
+
+public function string of_getthemefile ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_GetThemeFile
+//
+//	Access:  public
+//
+//	Arguments:  None
+//
+//	Returns:  String
+//	The current theme's theme.json, or "" if there is no theme or its file can't be found
+//
+//	Description:  GetTheme gives only the theme's name.  The file is in the folder
+//		applied with gnv_app.of_ApplyTheme, or else in theme\<name> under the current
+//		directory, where a deployed application keeps its themes.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+string	ls_theme, ls_file
+
+ls_theme = GetTheme()
+If Len(ls_theme) = 0 Then Return ""
+
+If IsValid(gnv_app) Then
+	ls_file = gnv_app.of_GetThemePath()
+	If Len(ls_file) > 0 Then
+		If Right(ls_file, 1) <> "\" Then ls_file += "\"
+		ls_file += "theme.json"
+		If FileExists(ls_file) Then Return ls_file
+	End If
+End If
+
+ls_file = GetCurrentDirectory() + "\theme\" + ls_theme + "\theme.json"
+If FileExists(ls_file) Then Return ls_file
+Return ""
+end function
+
+public function integer of_getcolors (ref long al_background, ref long al_text);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_GetColors
+//
+//	Access:  public
+//
+//	Arguments:
+//	al_background	The status bar's background color (passed by reference)
+//	al_text			The status bar's text color (passed by reference)
+//
+//	Returns:  Integer	1
+//
+//	Description:  The colors the status bar uses, each one in this order: the color the
+//		application set (of_SetBackgroundColor, of_SetTextColor), the current theme's
+//		(of_GetThemeColors), or the system's (the ButtonFace color, as Windows has it, and
+//		Window Text).
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+long		ll_themebackground = -1, ll_themetext = -1
+string	ls_file
+
+ls_file = of_GetThemeFile()
+If Len(ls_file) > 0 Then of_GetThemeColors(ls_file, ll_themebackground, ll_themetext)
+
+If il_backgroundcolor >= 0 Then
+	al_background = il_backgroundcolor
+ElseIf ll_themebackground >= 0 Then
+	al_background = ll_themebackground
+Else
+	al_background = of_SystemButtonFace()
+End If
+
+If il_textcolor >= 0 Then
+	al_text = il_textcolor
+ElseIf ll_themetext >= 0 Then
+	al_text = ll_themetext
+Else
+	al_text = 33554432				// Window Text
+End If
+Return 1
+end function
+
+public function integer of_refreshthemecolors ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_RefreshThemeColors
+//
+//	Access:  public
+//
+//	Arguments:  None
+//
+//	Returns:  Integer
+//	 1 if it succeeds, 0 if the status bar isn't open
+//
+//	Description:  Colors the status bar for the current theme (of_GetColors).  UI themes
+//		don't style the status bar, which is a popup window with a DataWindow created at
+//		run time.  Called when the status bar opens, by gnv_app.of_ApplyTheme, and when
+//		the status bar notices a new theme (of_CheckTheme) or new system colors.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+long	ll_background, ll_text
+
+is_theme = GetTheme()
+If Not IsValid(iw_statusbar) Then Return 0
+
+of_GetColors(ll_background, ll_text)
+iw_statusbar.of_SetBackgroundColor(ll_background)
+iw_statusbar.of_SetTextColor(ll_text)
+iw_statusbar.of_RefreshColors()
+Return 1
+end function
+
+public function integer of_checktheme ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_CheckTheme
+//
+//	Access:  public
+//
+//	Arguments:  None
+//
+//	Returns:  Integer
+//	 1 if the theme changed and the colors were refreshed, 0 if it didn't change
+//
+//	Description:  PowerBuilder has no event for a theme change, so the status bar calls
+//		this at each refresh, to follow a theme applied with ApplyTheme anywhere.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+If GetTheme() = is_theme Then Return 0
+Return of_RefreshThemeColors()
+end function
+
+protected function long of_hexcolor (string as_color);//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_HexColor
+//
+//	Access:  protected
+//
+//	Arguments:
+//	as_color	A color written #RRGGBB
+//
+//	Returns:  Long
+//	The color, or -1 if as_color isn't one
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+constant string HEX = "0123456789ABCDEF"
+integer	li_i, li_digit
+long		ll_rgb[3]
+
+If IsNull(as_color) Then Return -1
+If Len(as_color) <> 7 Or Left(as_color, 1) <> "#" Then Return -1
+For li_i = 0 To 5
+	li_digit = Pos(HEX, Upper(Mid(as_color, 2 + li_i, 1))) - 1
+	If li_digit < 0 Then Return -1
+	ll_rgb[Int(li_i / 2) + 1] = ll_rgb[Int(li_i / 2) + 1] * 16 + li_digit
+Next
+Return RGB(ll_rgb[1], ll_rgb[2], ll_rgb[3])
+end function
+
+protected function long of_systembuttonface ();//////////////////////////////////////////////////////////////////////////////
+//
+//	Function:  of_SystemButtonFace
+//
+//	Access:  protected
+//
+//	Arguments:  None
+//
+//	Returns:  Long
+//	The ButtonFace color of Windows, as pfc_w_statusbar uses it without a theme
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c) 
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+string	ls_rgb
+integer	li_pos, li_red, li_green
+
+RegistryGet("hkey_current_user\control panel\colors", "buttonface", ls_rgb)
+If IsNull(ls_rgb) Or Len(Trim(ls_rgb)) = 0 Then Return 78682240	// the ButtonFace system color
+
+// "red green blue"
+li_pos = Pos(ls_rgb, " ")
+li_red = Integer(Left(ls_rgb, li_pos - 1))
+ls_rgb = Mid(ls_rgb, li_pos + 1)
+li_pos = Pos(ls_rgb, " ")
+li_green = Integer(Left(ls_rgb, li_pos - 1))
+Return RGB(li_red, li_green, Integer(Mid(ls_rgb, li_pos + 1)))
 end function
 
 on pfc_n_cst_winsrv_statusbar.create
