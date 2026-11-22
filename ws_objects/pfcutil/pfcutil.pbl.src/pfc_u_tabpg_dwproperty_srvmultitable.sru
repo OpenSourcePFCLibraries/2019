@@ -1478,7 +1478,7 @@ integer width = 832
 integer height = 460
 integer taborder = 60
 boolean multiselect = true
-integer accelerator = 107
+integer accelerator = 113
 end type
 
 type st_keycolumns from u_st within pfc_u_tabpg_dwproperty_srvmultitable
