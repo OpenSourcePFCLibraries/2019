@@ -15,7 +15,6 @@ boolean enabled = true
 string text = ""
 event mousemove pbm_mousemove
 event lbuttonup pbm_lbuttonup
-event lbuttondown pbm_lbuttondown
 end type
 global pfc_u_st_splitbar pfc_u_st_splitbar
 
@@ -249,6 +248,7 @@ event lbuttondown;//////////////////////////////////////////////////////////////
 //
 //	Description:	Starts a drag of the bar: the left button was pressed on it, so
 //						mousemove moves it until lbuttonup.
+//						Overrides u_st, which ignores clicks on labels.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -256,6 +256,7 @@ event lbuttondown;//////////////////////////////////////////////////////////////
 //
 //	Version
 //	2025	Initial version (#39)
+//	2025	Overrides the ancestor event that u_st now declares (#116)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
