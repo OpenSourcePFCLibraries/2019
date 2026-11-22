@@ -15,9 +15,10 @@ fontfamily fontfamily = swiss!
 string facename = "MS Sans Serif"
 long textcolor = 33554432
 long backcolor = 80263581
-boolean enabled = false
+boolean enabled = true
 string text = "none"
 boolean focusrectangle = false
+event lbuttondown pbm_lbuttondown
 end type
 global pfc_u_st pfc_u_st
 
@@ -209,6 +210,59 @@ If gnv_app.of_GetMicrohelp() Then
 	End If
 End If
 
+end event
+
+event lbuttondown;//////////////////////////////////////////////////////////////////////////////
+//
+//	Event:  			lbuttondown
+//
+//	Arguments:
+//	flags
+//	xpos
+//	ypos
+//
+//	Returns:  		long
+//	1 = the label ignores the click
+//
+//	Description:	Ignore a click on the label, so that it doesn't take focus
+//						from the control the user is working in, and clicked doesn't
+//						occur.  Since PFC 5.0, u_st was created disabled for the same
+//						effect, but themes draw disabled labels grey (#116).
+//						For a label that reacts to clicks, override this event (don't
+//						call the ancestor) and return 0.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+//	Revision History
+//
+//	Version
+//	2025	Initial version (#116)
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+/*
+ * Open Source PowerBuilder Foundation Class Libraries
+ *
+ * Copyright (c) 2004-2017, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted in accordance with the MIT License
+
+ *
+ * https://opensource.org/licenses/MIT
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals and was originally based on software copyright (c)
+ * 1996-2004 Sybase, Inc. http://www.sybase.com.  For more
+ * information on the Open Source PowerBuilder Foundation Class
+ * Libraries see https://github.com/OpenSourcePFCLibraries
+*/
+//
+//////////////////////////////////////////////////////////////////////////////
+
+Return 1
 end event
 
 on pfc_u_st.create
