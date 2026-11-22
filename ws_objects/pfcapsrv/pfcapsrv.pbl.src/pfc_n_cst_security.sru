@@ -3248,6 +3248,7 @@ protected function boolean of_isdefaulteligible (powerobject apo_object);///////
 //
 //	Version
 //	2025	Initial version
+//	2025	PowerBuilder 2019 has no TabbedBar control: don't list tabbedbar!
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -3287,7 +3288,7 @@ Choose Case apo_object.TypeOf()
 			userobject!, tab!, window!
 		// Labels, shapes, pictures, progress, containers
 		Return False
-	Case statusbar!, tabbedbar!
+	Case statusbar!
 		// Frame chrome
 		Return False
 End Choose
